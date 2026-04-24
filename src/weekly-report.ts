@@ -12,7 +12,9 @@ import fs from "fs";
 import path from "path";
 import type { ScanResult } from "./scanner.js";
 
-const RESULTS_DIR = "/tmp/williams-entry-radar/results";
+const RESULTS_DIR =
+  process.env.RADAR_RESULTS_DIR ??
+  new URL("../results", import.meta.url).pathname;
 
 function ensureResultsDir(): void {
   if (!fs.existsSync(RESULTS_DIR)) fs.mkdirSync(RESULTS_DIR, { recursive: true });
@@ -20,11 +22,21 @@ function ensureResultsDir(): void {
 
 function getWeekLabel(): string {
   const now = new Date();
-  const year = now.getFullYear();
-  // ISO week number
-  const startOfYear = new Date(year, 0, 1);
-  const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / (86400 * 1000));
-  const weekNum = Math.ceil((dayOfYear + startOfYear.getDay() + 1) / 7);
+  // ISO 8601 week number — Thursday-based (ISO 8601 week belongs to the year of its Thursday)
+  const tmp = new Date(now.getTime());
+  tmp.setHours(0, 0, 0, 0);
+  // Set to nearest Thursday (ISO weeks start on Monday; Thursday determines the year)
+  tmp.setDate(tmp.getDate() + 3 - ((tmp.getDay() + 6) % 7));
+  const week1 = new Date(tmp.getFullYear(), 0, 4); // Jan 4 is always in week 1
+  const weekNum =
+    1 +
+    Math.round(
+      ((tmp.getTime() - week1.getTime()) / 86400000 -
+        3 +
+        ((week1.getDay() + 6) % 7)) /
+        7
+    );
+  const year = tmp.getFullYear();
   return `${year}-W${String(weekNum).padStart(2, "0")}`;
 }
 

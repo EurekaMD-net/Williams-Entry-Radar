@@ -61,10 +61,15 @@ async function main(): Promise<void> {
     if (spyBars.length) tickerBars.set("SPY", spyBars);
 
     // Inject meta for the ticker if not in universe
+    // Push temporarily so getMetaForTicker() finds it inside runScan/scanTicker
+    let injected = false;
     if (!meta) {
       UNIVERSE.push({ ticker: singleTicker, sector: "?", tier: 2 });
+      injected = true;
     }
     const results = runScan(tickerBars);
+    // Clean up temporary injection
+    if (injected) UNIVERSE.pop();
     const r = results.find((x) => x.ticker === singleTicker);
     if (r) {
       console.log(`\n  Signal: ${r.signalLevel}  |  Weeks active: ${r.weeksActive}  |  Signal date: ${r.signalDate ?? "—"}`);
