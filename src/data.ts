@@ -3,7 +3,8 @@
  * Returns sorted weekly candles (oldest → newest)
  */
 
-const API_KEY = "REDACTED_AV_KEY_ROTATED_2026_04_24";
+const API_KEY = process.env.AV_API_KEY ?? "";
+if (!API_KEY) throw new Error("AV_API_KEY environment variable is required");
 const BASE_URL = "https://www.alphavantage.co/query";
 
 export interface WeeklyCandle {

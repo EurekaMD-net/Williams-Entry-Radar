@@ -8,7 +8,8 @@
 
 import { isCacheValid, readCache, writeCache } from "./cache.js";
 
-const AV_API_KEY = "REDACTED_AV_KEY_ROTATED_2026_04_24"; // Alpha Vantage Premium key
+const AV_API_KEY = process.env.AV_API_KEY ?? "";
+if (!AV_API_KEY) throw new Error("AV_API_KEY environment variable is required");
 const BASE_URL = "https://www.alphavantage.co/query";
 const DELAY_MS = 1100; // 1.1s — safely under 75 req/min, avoids burst detection
 
