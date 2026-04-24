@@ -1,0 +1,16 @@
+{
+  "name": "williams-entry-radar",
+  "version": "1.0.0",
+  "description": "Backtesting engine for Bill Williams AO/AC entry signal detection",
+  "type": "module",
+  "scripts": {
+    "backtest": "npx tsx src/backtest.ts",
+    "scan": "npx tsx src/scan.ts",
+    "typecheck": "npx tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0"
+  }
+}
