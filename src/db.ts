@@ -75,12 +75,23 @@ export function getDb(): Database.Database {
 // Schema (additive — safe to call on existing DB)
 // ---------------------------------------------------------------------------
 
-function applySchema(db: Database.Database): void {
-  // OHLC CHECK constraints are DATA-QUALITY guards: without them, a
-  // botched fetch parsing a zero or inverted bar would silently land in
-  // the cache and contaminate every downstream backtest/scan.
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS weekly_bars (
+/**
+ * IMPORTANT: the `close` field here is Alpha Vantage's "5. adjusted
+ * close" (dividend / split adjusted), while `open`, `high`, and `low`
+ * come from the unadjusted "1. open" / "2. high" / "3. low" fields.
+ * This mixing is intentional — Williams' AO/AC must run on adjusted
+ * series to avoid false signals at ex-div dates, but we don't burn a
+ * second API call just to fetch adjusted highs and lows.
+ *
+ * Because of that, CHECK clauses that compare `close` against `high`
+ * or `low` would fire on any dividend-paying stock's historical rows
+ * (adjusted close can be below the unadjusted low after backward
+ * dividend adjustment, or above the unadjusted high after splits).
+ * So the data-quality guards below only compare fields on the SAME
+ * adjustment basis: high/low/open among themselves, and every price
+ * > 0. Anything beyond that would be a false positive.
+ */
+const WEEKLY_BARS_CREATE_SQL = `CREATE TABLE weekly_bars (
       ticker      TEXT    NOT NULL,
       date        TEXT    NOT NULL,
       open        REAL    NOT NULL,
@@ -96,11 +107,68 @@ function applySchema(db: Database.Database): void {
       CHECK (close  > 0),
       CHECK (high  >= low),
       CHECK (high  >= open),
-      CHECK (high  >= close),
       CHECK (low   <= open),
-      CHECK (low   <= close),
       CHECK (volume >= 0)
+    )`;
+
+/**
+ * Migrate a pre-constraint `weekly_bars` table to the constrained schema.
+ *
+ * `CREATE TABLE IF NOT EXISTS` is a no-op once the table exists, so adding
+ * new CHECK clauses to the DDL doesn't retroactively protect existing
+ * deployments. We detect that case by looking for the first CHECK clause
+ * in `sqlite_master.sql` and, if missing, rebuild the table: create a
+ * temp, copy the rows, drop the old, rename the temp. Wrapped in a single
+ * transaction so a failure leaves the original table intact.
+ *
+ * Copy-time row violations surface as a CHECK constraint error inside the
+ * transaction, which aborts the whole migration — the user sees a clear
+ * failure rather than quiet data loss.
+ */
+export function migrateWeeklyBarsIfNeeded(db: Database.Database): void {
+  const row = db
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='weekly_bars'",
+    )
+    .get() as { sql: string } | undefined;
+  if (!row) return; // table doesn't exist yet; CREATE below will make it
+  if (row.sql.includes("CHECK (")) return; // already migrated
+  const migrate = db.transaction(() => {
+    db.exec(`
+      ALTER TABLE weekly_bars RENAME TO weekly_bars_pre_checks;
+      ${WEEKLY_BARS_CREATE_SQL};
+      INSERT INTO weekly_bars SELECT * FROM weekly_bars_pre_checks;
+      DROP TABLE weekly_bars_pre_checks;
+    `);
+  });
+  try {
+    migrate();
+    console.log(
+      "[db] Migrated weekly_bars to CHECK-constrained schema (existing rows preserved).",
     );
+  } catch (err) {
+    console.error(
+      "[db] weekly_bars CHECK-migration failed — original table untouched:",
+      err,
+    );
+    throw err;
+  }
+}
+
+function applySchema(db: Database.Database): void {
+  // OHLC CHECK constraints are DATA-QUALITY guards: without them, a
+  // botched fetch parsing a zero or inverted bar would silently land in
+  // the cache and contaminate every downstream backtest/scan. The
+  // migration below covers pre-existing DBs where the table was created
+  // without these CHECKs; CREATE ... IF NOT EXISTS + CREATE INDEX IF
+  // NOT EXISTS on every boot ensures fresh installs + post-migration
+  // rebuilds both end up with the same final shape.
+  migrateWeeklyBarsIfNeeded(db);
+  db.exec(`
+    ${WEEKLY_BARS_CREATE_SQL.replace("CREATE TABLE ", "CREATE TABLE IF NOT EXISTS ")};
+
+    CREATE INDEX IF NOT EXISTS idx_weekly_bars_ticker_date
+      ON weekly_bars (ticker, date DESC);
 
     CREATE TABLE IF NOT EXISTS ticker_registry (
       ticker          TEXT    PRIMARY KEY,

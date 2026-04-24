@@ -6,12 +6,12 @@ import type { WeeklyCandle } from "./data.js";
  * Deterministic fixture: 40 bars with known midpoints.
  * Midpoints: 10, 11, 12, ..., 49 (linearly increasing).
  *
- * Expected: for a linearly increasing input x_i = 10 + i,
- *   SMA(5) at i = mean(x_{i-4}..x_i) = x_i - 2 = 8 + i
- *   SMA(34) at i = mean(x_{i-33}..x_i) = x_i - 16.5 = -6.5 + i
- *   AO at i = SMA(5) - SMA(34) = 14.5 (constant for i >= 33)
- *   SMA(5) of AO at i = 14.5 (constant once warm)
- *   AC at i = 14.5 - 14.5 = 0 (constant for i >= 37)
+ * Expected, for linear input x_i = 10 + i:
+ *   SMA(5)  at i = mean(x_{i-4}..x_i)   = x_{i-2}    = (10+i) - 2    = i + 8
+ *   SMA(34) at i = mean(x_{i-33}..x_i)  = x_{i-16.5} = (10+i) - 16.5 = i - 6.5
+ *   AO      at i = SMA(5) - SMA(34)     = (i + 8) - (i - 6.5)        = 14.5
+ *   SMA(5) of AO = 14.5 (constant once warm)
+ *   AC      at i = AO - SMA(5)_of_AO                                 = 0
  *
  * This gives us an exact, hand-computable fixture that catches any
  * off-by-one in the SMA windows or warm-up masks.

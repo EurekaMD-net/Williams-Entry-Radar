@@ -39,11 +39,19 @@ function partsInTz(
     Fri: 5,
     Sat: 6,
   };
+  const weekday = weekdayMap[map.weekday];
+  if (weekday === undefined) {
+    // Fail loud — silently defaulting to Sunday would shift every ISO
+    // week calculation and is invisible in the output.
+    throw new Error(
+      `Intl.DateTimeFormat did not emit a recognized weekday for ${timeZone} / ${date.toISOString()} (got: ${JSON.stringify(map.weekday)})`,
+    );
+  }
   return {
     year: Number(map.year),
     month: Number(map.month),
     day: Number(map.day),
-    weekday: weekdayMap[map.weekday] ?? 0,
+    weekday,
   };
 }
 
