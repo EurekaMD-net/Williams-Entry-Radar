@@ -16,38 +16,98 @@ CONDICIÓN DE ALERTA (todas deben cumplirse):
 
 **Jerarquía de Williams:** AC → AO → Precio. AC anticipa a AO; AO anticipa al precio.
 
-## Resultados del Backtest (2019–2026, Weekly)
+---
 
-Universo: 8 ETFs sectoriales del S&P 500. **338 señales detectadas** en ~26 años de datos.
+## Fase 1 — ETFs Sectoriales (2019–2026, 8 tickers)
 
-| Sector | Señales | Hit Rate 8W | Avg Return 8W | Avg Return 12W | Max DD |
-|--------|---------|-------------|---------------|----------------|--------|
-| **Defensive** (XLU, XLP) | 100 | **70.0%** | +2.44% | +2.81% | -5.78% |
-| **Cyclical** (XLE, XLI) | 92 | 66.3% | +2.76% | +2.60% | -9.61% |
-| **Growth/Tech** (XLK, XLY) | 82 | 62.2% | +2.42% | +3.10% | -10.01% |
-| **High-Vol** (XBI, ARKG) | 65 | 56.3% | +2.40% | +2.48% | -13.35% |
-| **OVERALL** | **339** | **64.5%** | — | — | — |
+**338 señales detectadas** en 8 ETFs sectoriales.
 
-### Hallazgos Clave
+| Sector | Hit Rate 8W | Avg Return 8W | Max DD |
+|--------|-------------|---------------|--------|
+| **Defensive** (XLU, XLP) | **70.0%** | +2.44% | -5.78% |
+| **Cyclical** (XLE, XLI) | 66.3% | +2.76% | -9.61% |
+| **Growth/Tech** (XLK, XLY) | 62.2% | +2.42% | -10.01% |
+| **High-Vol** (XBI, ARKG) | 56.3% | +2.40% | -13.35% |
+| **OVERALL** | **64.5%** | — | — |
 
-1. **La tesis se valida**: Hit rate global de 64.5% vs. ~50% aleatorio. Significativo.
-2. **Defensivos ganan en fiabilidad** (70% hit rate), con menor drawdown (-5.78%). Ideal para señales de alta confianza.
-3. **Cíclicos tienen mejor return promedio** (+2.76% a 8W) con mayor volatilidad. Mayor riesgo/recompensa.
-4. **High-Vol (biotech)**: señales más ruidosas (56% hit rate) pero los aciertos son explosivos (+38% a 8W en 2020).
-5. **AO Lag**: 6-7 semanas promedio para que AO cruce cero tras la señal. Ventana óptima de entrada: antes del cruce de AO.
-6. **Peores señales** ocurren en bear markets estructurales (2008, 2002, dot-com crash) — contexto macro importa.
+**AO Lag promedio:** 6-7 semanas tras la señal AC.
 
-### Top 10 Señales Históricas
+---
 
-| Ticker | Fecha | Grupo | 4W% | 8W% | 12W% |
-|--------|-------|-------|-----|-----|------|
-| ARKG | 2020-04-03 | High-Vol | +33.8% | **+55.6%** | +69.6% |
-| XBI | 2020-04-03 | High-Vol | +21.3% | +38.3% | +47.5% |
-| XLY | 2020-04-03 | Growth/Tech | +21.5% | +34.4% | +34.2% |
-| XLE | 2020-10-09 | Cyclical | -6.0% | +32.0% | +24.8% |
-| XLK | 2020-04-03 | Growth/Tech | +15.3% | +27.0% | +32.0% |
+## Fase 2 — Componentes Individuales (26 años de datos, 80 tickers)
 
-> El COVID bottom de abril 2020 fue la señal más clara de la historia reciente. PLUG (caso de estudio) fue una señal equivalente a nivel de ticker individual.
+**3,774 señales** en 79 tickers de 4 sectores (XLU, XLP, XLE, XLI). Datos 2001–2026 weekly. Filtro macro: SPY vs SMA(40W).
+
+### Sector Summary
+
+| Sector | Tickers | Señales | Avg HR 8W | Avg Ret 8W | Avg Max DD |
+|--------|---------|---------|-----------|------------|------------|
+| **XLU** (Utilities) | 20 | 923 | **72.7%** | +5.07% | -4.9% |
+| **XLI** (Industrials) | 19 | 924 | 65.0% | +4.38% | -6.3% |
+| **XLE** (Energy) | 20 | 912 | 63.9% | **+5.11%** | -8.8% |
+| **XLP** (Consumer Staples) | 20 | 1,015 | 63.1% | +2.50% | -5.1% |
+
+### Top 15 Outliers (composite score = hit rate × clean ratio / drawdown)
+
+| Rank | Ticker | Sector | Signals | HR 8W | Ret 8W | Max DD | AO Lag | Score |
+|------|--------|--------|---------|-------|--------|--------|--------|-------|
+| 1 | **CEG** | Utilities | 2 | 100% | +43.3% | -1.3% | 9.0W | 1.924 |
+| 2 | **SO** | Utilities | 40 | **85%** | +6.6% | -1.7% | 11.8W | 1.704 |
+| 3 | **SRE** | Utilities | 39 | 80% | +4.9% | -3.0% | 15.6W | 1.469 |
+| 4 | **DE** | Industrials | 51 | 75% | +6.1% | -4.3% | 11.7W | 1.443 |
+| 5 | **WEC** | Utilities | 51 | 80% | +4.1% | -3.0% | 12.4W | 1.412 |
+| 6 | **LMT** | Industrials | 45 | 67% | +5.9% | -3.3% | 13.3W | 1.384 |
+| 7 | **AEE** | Utilities | 50 | 78% | +4.1% | -3.1% | 14.7W | 1.376 |
+| 8 | **ED** | Utilities | 55 | 76% | +4.0% | -2.4% | 10.8W | 1.369 |
+| 9 | **ETN** | Industrials | 45 | 73% | +6.4% | -5.9% | 12.8W | 1.363 |
+| 10 | **BKR** | Energy | 17 | 76% | +11.3% | -7.7% | 12.9W | 1.323 |
+| 11 | **CTAS** | Industrials | 44 | 66% | +6.2% | -4.8% | 12.7W | 1.298 |
+| 12 | **COST** | Consumer Staples | 43 | 74% | +4.4% | -4.2% | 11.6W | 1.294 |
+| 13 | **NEE** | Utilities | 48 | 77% | +3.8% | -4.2% | 14.6W | 1.288 |
+| 14 | **HON** | Industrials | 44 | 75% | +4.9% | -5.7% | 13.0W | 1.263 |
+| 15 | **DUK** | Utilities | 48 | 79% | +3.4% | -4.9% | 18.4W | 1.240 |
+
+> **CEG** (Constellation Energy) tiene solo 2 señales históricas — score inflado por muestra pequeña. El universo de alta confianza empieza en **SO** (40 señales, 85% HR).
+
+### Macro Filter Analysis
+
+| Régimen | Señales | Hit Rate 8W |
+|---------|---------|-------------|
+| Bull (SPY > SMA40W) | 2,287 | 64.8% |
+| Bear (SPY < SMA40W) | 1,487 | **67.4%** |
+
+**Hallazgo sorprendente:** La señal funciona *mejor* en mercados bajistas. Esto tiene sentido mecánico — cuando el mercado general está débil, las acciones defensivas (XLU, XLP) que generan señal AC están en sobre-venta extrema, lo que produce rebounds más pronunciados.
+
+---
+
+## Hallazgos Clave — Fase 2
+
+1. **XLU domina en fiabilidad**: 72.7% avg hit rate, drawdown controlado (-4.9%). El sector ideal para señales de alta confianza.
+2. **XLE domina en retorno**: +5.11% avg a 8W pero con mayor drawdown (-8.8%). Mayor riesgo/recompensa.
+3. **SO (Southern Company) es el outlier más robusto**: 85% hit rate en 40 señales — estadísticamente sólido, no ruido.
+4. **AO Lag expandido**: En tickers individuales el lag es 10-18 semanas (vs 6-7W en ETFs). El componente individual tarda más en confirmar que el ETF.
+5. **Macro filter no mejora significativamente**: La señal es robusta en ambos regímenes (64.8% bull vs 67.4% bear). No filtrar por macro.
+
+---
+
+## Señales Candidatas para Radar Live
+
+Los tickers con >30 señales históricas y HR ≥ 75%:
+
+| Ticker | Señales | HR 8W | Notas |
+|--------|---------|-------|-------|
+| **SO** | 40 | 85% | Más fiable del universo |
+| **WEC** | 51 | 80% | Utility mediana, ciclos limpios |
+| **DUK** | 48 | 79% | Duke Energy, defensivo puro |
+| **SRE** | 39 | 80% | Sempra, exposición internacional |
+| **NEE** | 48 | 77% | NextEra, líder renovables |
+| **AEE** | 50 | 78% | Ameren, muy limpio |
+| **ED** | 55 | 76% | Consolidated Edison, 26 años de datos |
+| **HON** | 44 | 75% | Industrial diversificado |
+| **DE** | 51 | 75% | Deere, ciclos agrícolas |
+| **BKR** | 17 | 76% | Baker Hughes, muestra pequeña pero sólida |
+
+---
 
 ## Metodología
 
@@ -59,54 +119,60 @@ AC = AO − SMA(AO, 5)
 color = verde si valor[t] > valor[t-1], rojo si valor[t] < valor[t-1]
 ```
 
+### Composite Score (Fase 2)
+```
+score = (hitRate8W × 0.4 + cleanHitRate × 0.3 + min(avgRet8W × 5, 0.3))
+        × (1 + cleanRatio)
+        / (1 + |avgMaxDD| × 3)
+
+cleanSignal = señal con maxDD > -15% en ventana de 12 semanas
+```
+
 ### Métricas de Evaluación
 - **Hit Rate 8W**: % de señales con retorno positivo a 8 semanas
 - **Avg Return**: retorno promedio a 4W / 8W / 12W desde la señal
 - **Max Drawdown**: caída máxima en ventana de 12 semanas post-señal
-- **AO Lag**: semanas hasta que AO cruza a positivo (indicador de timing)
+- **AO Lag**: semanas hasta que AO cruza a positivo
+- **Clean Signals**: señales sin drawdown catastrófico (< -15%)
+
+---
 
 ## Estructura del Código
 
 ```
 src/
-  data.ts          # Alpha Vantage weekly data fetcher
-  indicators.ts    # AO y AC calculation (Bill Williams exact formulas)
-  signals.ts       # Signal detection — AC rojo→verde con ambos negativos
-  fetch-all.ts     # Batch downloader con rate limiting (13s entre calls)
-  backtest-local.ts # Backtest engine — lee cache local, sin API calls
-  scan.ts          # Live scanner — estado actual de cada ticker
-  verify.ts        # Spot-check vs TradingView
+  data.ts              # Alpha Vantage weekly data fetcher
+  indicators.ts        # AO y AC calculation (Bill Williams exact formulas)
+  signals.ts           # Signal detection — AC rojo→verde con ambos negativos
+  get-components.ts    # Top 20 tickers per sector (XLU, XLP, XLE, XLI)
+  fetch-all.ts         # Phase 1 batch downloader (8 ETFs)
+  fetch-phase2.ts      # Phase 2 batch downloader (81 tickers, sequential + cache)
+  backtest-local.ts    # Phase 1 backtest engine
+  backtest-phase2.ts   # Phase 2 engine (macro filter, composite score)
+  scan.ts              # Live scanner — estado actual de todos los tickers
+  verify.ts            # Spot-check vs TradingView
 
 results/
-  backtest_2019-2026.csv  # 338 señales con todos los outcomes
+  backtest_2019-2026.csv      # Phase 1: 338 señales (8 ETFs)
+  phase2_outcomes.csv         # Phase 2: 3,774 señales individuales
+  phase2_scorecard.csv        # Phase 2: scorecard por ticker (79 tickers)
 ```
 
-## Uso
+---
 
-```bash
-npm install
+## Próximos Pasos — Fase 3
 
-# Paso 1: descargar datos (una sola vez, ~2 min por rate limiting)
-npx tsx src/fetch-all.ts
+- [ ] **Scanner semanal live**: correr cada viernes post-cierre, detectar señales nuevas en los 10 candidatos del radar
+- [ ] **Integración Jarvis**: alertas automáticas vía Telegram cuando aparece nueva señal en los top tickers
+- [ ] **Xpoz sentiment layer**: cruzar señal Williams con sentimiento Reddit (r/stocks, r/investing) del ticker — señal + sentimiento negativo extremo = setup más fuerte
+- [ ] **Confirmación de 2W**: backtest adicional con condición "AC verde × 2 semanas consecutivas" — ¿sube el hit rate?
+- [ ] **Dashboard ECharts**: visualización de AO/AC + señales sobre precio para los top 10
 
-# Paso 2: backtesting completo desde cache
-npx tsx src/backtest-local.ts
-
-# Paso 3: scan live del estado actual de todos los tickers
-npx tsx src/scan.ts
-```
-
-## Próximos Pasos
-
-- [ ] Expandir universo a tickers individuales del S&P 500 por sector
-- [ ] Filtro de contexto macro (evitar señales en bear markets estructurales)
-- [ ] Backtest con criterio de confirmación de 2 semanas de AC verde
-- [ ] Dashboard live con ECharts (señales activas + AO/AC chart)
-- [ ] Integración con Jarvis — alertas automáticas semanales
+---
 
 ## Stack
 
-- **Datos**: Alpha Vantage API (weekly adjusted)
+- **Datos**: Alpha Vantage API (weekly adjusted, Premium)
 - **Lenguaje**: TypeScript ESM, Node.js
 - **Almacenamiento**: JSON cache local + CSV results
 - **Timeframe**: Weekly exclusivamente
