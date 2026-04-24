@@ -18,8 +18,8 @@ import { writeFileSync } from "fs";
 
 // ─── Universe ────────────────────────────────────────────────────────────────
 const UNIVERSE: Record<string, string[]> = {
-  "Defensive": ["XLU", "XLP"],
-  "Cyclical": ["XLE", "XLI"],
+  Defensive: ["XLU", "XLP"],
+  Cyclical: ["XLE", "XLI"],
   "Growth/Tech": ["XLK", "XLY"],
   "High-Vol": ["XBI", "ARKG"],
 };
@@ -35,38 +35,46 @@ interface Outcome {
   return8W: number | null;
   return12W: number | null;
   maxDrawdown12W: number | null;
-  aoLagWeeks: number | null;   // weeks until AO crosses zero (null if never in 12W)
+  aoLagWeeks: number | null; // weeks until AO crosses zero (null if never in 12W)
 }
 
 function measureOutcome(
   signal: Signal,
   bars: IndicatorBar[],
-  group: string
-): Outcome {
-  const idx = signal.signalIndex;
-  const entryPrice = bars[idx].close;
+  group: string,
+): Outcome | null {
+  // Lookahead fix: the signal is detected on bar N using bar N's close.
+  // You can only FILL the trade on bar N+1 (the next week's open or close).
+  // Using bar N's close as entryPrice bakes knowledge of the signal into
+  // the fill, which silently inflates hit rate by the typical weekly drift.
+  const signalIdx = signal.signalIndex;
+  const entryIdx = signalIdx + 1;
+  const entryBar = bars[entryIdx];
+  if (!entryBar) return null; // not enough forward data to enter
+
+  const entryPrice = entryBar.close;
 
   const fwd = (weeks: number): number | null => {
-    const target = bars[idx + weeks];
+    const target = bars[entryIdx + weeks];
     if (!target) return null;
-    return (target.close - entryPrice) / entryPrice * 100;
+    return ((target.close - entryPrice) / entryPrice) * 100;
   };
 
-  // Max drawdown in 12W window
+  // Max drawdown in 12W window (measured from the entry bar forward)
   let maxDrawdown12W: number | null = null;
   let peak = entryPrice;
   for (let w = 1; w <= 12; w++) {
-    const bar = bars[idx + w];
+    const bar = bars[entryIdx + w];
     if (!bar) break;
     if (bar.close > peak) peak = bar.close;
-    const dd = (bar.close - peak) / peak * 100;
+    const dd = ((bar.close - peak) / peak) * 100;
     if (maxDrawdown12W === null || dd < maxDrawdown12W) maxDrawdown12W = dd;
   }
 
-  // AO lag: how many weeks until AO crosses from negative to positive
+  // AO lag: how many weeks AFTER entry until AO crosses to positive
   let aoLagWeeks: number | null = null;
   for (let w = 1; w <= 12; w++) {
-    const bar = bars[idx + w];
+    const bar = bars[entryIdx + w];
     if (!bar) break;
     if (bar.ao > 0) {
       aoLagWeeks = w;
@@ -94,33 +102,49 @@ function mean(values: number[]): number {
 
 function hitRate(values: number[]): number {
   if (values.length === 0) return 0;
-  return values.filter((v) => v > 0).length / values.length * 100;
+  return (values.filter((v) => v > 0).length / values.length) * 100;
 }
 
 // ─── Report ───────────────────────────────────────────────────────────────────
 function printScorecard(outcomes: Outcome[]): void {
   const groups = [...new Set(outcomes.map((o) => o.group))];
 
-  console.log("\n═══════════════════════════════════════════════════════════════");
-  console.log("  WILLIAMS ENTRY RADAR — BACKTEST SCORECARD (2019–2026, Weekly)");
-  console.log("═══════════════════════════════════════════════════════════════\n");
+  console.log(
+    "\n═══════════════════════════════════════════════════════════════",
+  );
+  console.log(
+    "  WILLIAMS ENTRY RADAR — BACKTEST SCORECARD (2019–2026, Weekly)",
+  );
+  console.log(
+    "═══════════════════════════════════════════════════════════════\n",
+  );
 
   for (const group of groups) {
     const g = outcomes.filter((o) => o.group === group);
     const r8 = g.map((o) => o.return8W).filter((v): v is number => v !== null);
     const r4 = g.map((o) => o.return4W).filter((v): v is number => v !== null);
-    const r12 = g.map((o) => o.return12W).filter((v): v is number => v !== null);
-    const dd = g.map((o) => o.maxDrawdown12W).filter((v): v is number => v !== null);
-    const lag = g.map((o) => o.aoLagWeeks).filter((v): v is number => v !== null);
+    const r12 = g
+      .map((o) => o.return12W)
+      .filter((v): v is number => v !== null);
+    const dd = g
+      .map((o) => o.maxDrawdown12W)
+      .filter((v): v is number => v !== null);
+    const lag = g
+      .map((o) => o.aoLagWeeks)
+      .filter((v): v is number => v !== null);
 
     console.log(`▶ ${group}`);
     console.log(`  Signals detected : ${g.length}`);
-    console.log(`  Hit rate 8W      : ${hitRate(r8).toFixed(1)}%  (${r8.filter(v=>v>0).length}/${r8.length} positive)`);
+    console.log(
+      `  Hit rate 8W      : ${hitRate(r8).toFixed(1)}%  (${r8.filter((v) => v > 0).length}/${r8.length} positive)`,
+    );
     console.log(`  Avg return 4W    : ${mean(r4).toFixed(2)}%`);
     console.log(`  Avg return 8W    : ${mean(r8).toFixed(2)}%`);
     console.log(`  Avg return 12W   : ${mean(r12).toFixed(2)}%`);
     console.log(`  Avg max drawdown : ${mean(dd).toFixed(2)}%`);
-    console.log(`  Avg AO lag       : ${lag.length > 0 ? mean(lag).toFixed(1) + " weeks" : "N/A (AO stayed negative 12W)"}`);
+    console.log(
+      `  Avg AO lag       : ${lag.length > 0 ? mean(lag).toFixed(1) + " weeks" : "N/A (AO stayed negative 12W)"}`,
+    );
     console.log();
   }
 
@@ -130,20 +154,23 @@ function printScorecard(outcomes: Outcome[]): void {
     .sort((a, b) => (b.return8W ?? 0) - (a.return8W ?? 0))
     .slice(0, 10);
 
-  console.log("─── TOP 10 SIGNALS (8W return) ────────────────────────────────");
+  console.log(
+    "─── TOP 10 SIGNALS (8W return) ────────────────────────────────",
+  );
   console.log("  Ticker  Date        Group         4W%    8W%   12W%   MaxDD%");
   for (const o of top10) {
     console.log(
       `  ${o.signal.ticker.padEnd(6)}  ${o.signal.date}  ${o.group.padEnd(12)}  ` +
-      `${(o.return4W ?? 0).toFixed(1).padStart(5)}  ${(o.return8W ?? 0).toFixed(1).padStart(5)}  ` +
-      `${(o.return12W ?? 0).toFixed(1).padStart(5)}  ${(o.maxDrawdown12W ?? 0).toFixed(1).padStart(7)}`
+        `${(o.return4W ?? 0).toFixed(1).padStart(5)}  ${(o.return8W ?? 0).toFixed(1).padStart(5)}  ` +
+        `${(o.return12W ?? 0).toFixed(1).padStart(5)}  ${(o.maxDrawdown12W ?? 0).toFixed(1).padStart(7)}`,
     );
   }
   console.log();
 }
 
 function exportCsv(outcomes: Outcome[], path: string): void {
-  const header = "ticker,group,date,ao,ac,acBottomDepth,entryPrice,return4W,return8W,return12W,maxDrawdown12W,aoLagWeeks";
+  const header =
+    "ticker,group,date,ao,ac,acBottomDepth,entryPrice,return4W,return8W,return12W,maxDrawdown12W,aoLagWeeks";
   const rows = outcomes.map((o) =>
     [
       o.signal.ticker,
@@ -158,7 +185,7 @@ function exportCsv(outcomes: Outcome[], path: string): void {
       o.return12W?.toFixed(2) ?? "",
       o.maxDrawdown12W?.toFixed(2) ?? "",
       o.aoLagWeeks?.toString() ?? "",
-    ].join(",")
+    ].join(","),
   );
   writeFileSync(path, [header, ...rows].join("\n"));
   console.log(`CSV saved → ${path}`);
@@ -184,7 +211,7 @@ async function main(): Promise<void> {
 
       for (const signal of signals) {
         const outcome = measureOutcome(signal, bars, group);
-        allOutcomes.push(outcome);
+        if (outcome) allOutcomes.push(outcome);
       }
 
       console.log(` ${candles.length} weeks, ${signals.length} signals`);

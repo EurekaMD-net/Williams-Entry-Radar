@@ -3,33 +3,42 @@
  * Returns sorted weekly candles (oldest → newest)
  */
 
-const API_KEY = process.env.AV_API_KEY ?? "";
-if (!API_KEY) throw new Error("AV_API_KEY environment variable is required");
 const BASE_URL = "https://www.alphavantage.co/query";
 
+function getApiKey(): string {
+  const key = process.env.AV_API_KEY ?? "";
+  if (!key) throw new Error("AV_API_KEY environment variable is required");
+  return key;
+}
+
 export interface WeeklyCandle {
-  date: string;       // YYYY-MM-DD (week ending date)
+  date: string; // YYYY-MM-DD (week ending date)
   open: number;
   high: number;
   low: number;
   close: number;
   volume: number;
-  midpoint: number;   // (high + low) / 2 — Williams uses this, NOT close
+  midpoint: number; // (high + low) / 2 — Williams uses this, NOT close
 }
 
 export async function fetchWeeklyData(ticker: string): Promise<WeeklyCandle[]> {
-  const url = `${BASE_URL}?function=TIME_SERIES_WEEKLY_ADJUSTED&symbol=${ticker}&apikey=${API_KEY}`;
+  const url = `${BASE_URL}?function=TIME_SERIES_WEEKLY_ADJUSTED&symbol=${ticker}&apikey=${getApiKey()}`;
 
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${ticker}`);
 
-  const json = await res.json() as Record<string, unknown>;
+  const json = (await res.json()) as Record<string, unknown>;
 
   // Rate limit / error check
-  if ("Note" in json) throw new Error(`Alpha Vantage rate limit: ${json["Note"]}`);
-  if ("Information" in json) throw new Error(`Alpha Vantage info: ${json["Information"]}`);
+  if ("Note" in json)
+    throw new Error(`Alpha Vantage rate limit: ${json["Note"]}`);
+  if ("Information" in json)
+    throw new Error(`Alpha Vantage info: ${json["Information"]}`);
 
-  const series = json["Weekly Adjusted Time Series"] as Record<string, Record<string, string>>;
+  const series = json["Weekly Adjusted Time Series"] as Record<
+    string,
+    Record<string, string>
+  >;
   if (!series) throw new Error(`No weekly data for ${ticker}`);
 
   const candles: WeeklyCandle[] = Object.entries(series)

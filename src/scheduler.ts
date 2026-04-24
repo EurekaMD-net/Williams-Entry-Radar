@@ -39,8 +39,12 @@ import { seedRegistry } from "./cache.js";
 import { getUniverseTickers } from "./universe.js";
 import { readCache } from "./cache.js";
 import type { WeeklyBar } from "./fetcher.js";
+import { DEFAULT_TZ } from "./time.js";
 import fs from "fs";
 import path from "path";
+
+const SCHEDULE_TZ = DEFAULT_TZ;
+const CRON_EXPR = "0 18 * * 5"; // Fridays 18:00 in SCHEDULE_TZ
 
 // ---------------------------------------------------------------------------
 // Signals log (signals.md) — persistent markdown log of every weekly run
@@ -49,42 +53,66 @@ import path from "path";
 const SIGNALS_MD_PATH = path.join(
   path.dirname(new URL(import.meta.url).pathname),
   "..",
-  "signals.md"
+  "signals.md",
 );
 
+/**
+ * Idempotent append: if a heading for `weekLabel` already exists in the
+ * file, replace that section in place; otherwise append.
+ *
+ * Heading match is EXACT against `^## <label>$` — not a substring match.
+ * A prior bug used `.includes("## 2026-W17")` which would also match
+ * `## 2026-W170` or any body text containing those characters.
+ */
 function appendToSignalsMd(weekLabel: string, summary: string): void {
-  // Idempotent: if this week's section already exists, overwrite it instead of appending.
-  // Prevents duplicate entries when --run-now is used more than once in the same week.
-  if (fs.existsSync(SIGNALS_MD_PATH)) {
-    const existing = fs.readFileSync(SIGNALS_MD_PATH, "utf-8");
-    const sectionStart = `## ${weekLabel}`;
-    if (existing.includes(sectionStart)) {
-      // Replace the existing section for this week
-      const beforeSection = existing.slice(0, existing.indexOf(sectionStart));
-      const afterSectionMatch = existing.slice(existing.indexOf(sectionStart) + sectionStart.length);
-      // Find the next section (## ...) or end of file
-      const nextSectionIdx = afterSectionMatch.search(/\n## /);
-      const afterSection = nextSectionIdx === -1 ? "" : afterSectionMatch.slice(nextSectionIdx);
-      const updated = beforeSection + `${sectionStart}\n\n${summary}\n\n---\n\n` + afterSection;
-      fs.writeFileSync(SIGNALS_MD_PATH, updated, "utf-8");
-      return;
-    }
+  const heading = `## ${weekLabel}`;
+  const entry = `${heading}\n\n${summary}\n\n---\n\n`;
+
+  if (!fs.existsSync(SIGNALS_MD_PATH)) {
+    fs.writeFileSync(
+      SIGNALS_MD_PATH,
+      `# Williams Entry Radar — Señales Semanales\n\n${entry}`,
+      "utf-8",
+    );
+    return;
   }
-  const header = fs.existsSync(SIGNALS_MD_PATH) ? "" : "# Williams Entry Radar — Señales Semanales\n\n";
-  const entry = `## ${weekLabel}\n\n${summary}\n\n---\n\n`;
-  fs.appendFileSync(SIGNALS_MD_PATH, header + entry, "utf-8");
+
+  const existing = fs.readFileSync(SIGNALS_MD_PATH, "utf-8");
+  // Exact-heading line test (anchored to start-of-line, end-of-line).
+  // Escape regex metachars in the label defensively.
+  const escaped = weekLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const headingLineRe = new RegExp(`^## ${escaped}$`, "m");
+  const headingLineMatch = headingLineRe.exec(existing);
+
+  if (!headingLineMatch) {
+    fs.appendFileSync(SIGNALS_MD_PATH, entry, "utf-8");
+    return;
+  }
+
+  const sectionStart = headingLineMatch.index;
+  const afterHeading = existing.slice(
+    sectionStart + headingLineMatch[0].length,
+  );
+  // Find the next `^## ` heading after this one, if any.
+  const nextHeadingRe = /^## /m;
+  const nextMatch = nextHeadingRe.exec(afterHeading);
+  const before = existing.slice(0, sectionStart);
+  const after = nextMatch ? afterHeading.slice(nextMatch.index) : "";
+  fs.writeFileSync(SIGNALS_MD_PATH, before + entry + after, "utf-8");
 }
 
 function buildSignalsSummary(
   results: ReturnType<typeof runScan>,
-  xpozLines: string[]
+  xpozLines: string[],
 ): string {
   const s2 = results.filter((r) => r.signalLevel === "S2");
   const s1 = results.filter((r) => r.signalLevel === "S1");
   const lines: string[] = [];
 
   lines.push(`**Run:** ${new Date().toISOString()}`);
-  lines.push(`**Escaneados:** ${results.length} | **S2:** ${s2.length} | **S1:** ${s1.length}`);
+  lines.push(
+    `**Escaneados:** ${results.length} | **S2:** ${s2.length} | **S1:** ${s1.length}`,
+  );
   lines.push("");
 
   if (s2.length > 0) {
@@ -92,7 +120,9 @@ function buildSignalsSummary(
     lines.push("| Ticker | Sector | T | HR% | AO | AC | Wks | Señal |");
     lines.push("|--------|--------|---|-----|-----|-----|-----|-------|");
     for (const r of s2) {
-      lines.push(`| ${r.ticker} | ${r.sector} | ${r.tier} | ${r.hrHistorical?.toFixed(1) ?? "—"}% | ${r.ao.toFixed(3)} | ${r.ac.toFixed(3)} | ${r.weeksActive} | ${r.signalDate ?? "?"} |`);
+      lines.push(
+        `| ${r.ticker} | ${r.sector} | ${r.tier} | ${r.hrHistorical?.toFixed(1) ?? "—"}% | ${r.ao.toFixed(3)} | ${r.ac.toFixed(3)} | ${r.weeksActive} | ${r.signalDate ?? "?"} |`,
+      );
     }
     if (xpozLines.length > 0) {
       lines.push("");
@@ -107,7 +137,9 @@ function buildSignalsSummary(
     lines.push("| Ticker | Sector | T | HR% | Wks | Señal |");
     lines.push("|--------|--------|---|-----|-----|-------|");
     for (const r of s1) {
-      lines.push(`| ${r.ticker} | ${r.sector} | ${r.tier} | ${r.hrHistorical?.toFixed(1) ?? "—"}% | ${r.weeksActive} | ${r.signalDate ?? "?"} |`);
+      lines.push(
+        `| ${r.ticker} | ${r.sector} | ${r.tier} | ${r.hrHistorical?.toFixed(1) ?? "—"}% | ${r.weeksActive} | ${r.signalDate ?? "?"} |`,
+      );
     }
   }
 
@@ -115,10 +147,63 @@ function buildSignalsSummary(
 }
 
 // ---------------------------------------------------------------------------
+// Pipeline safety: overlap guard + completion marker
+// ---------------------------------------------------------------------------
+
+let pipelineRunning = false;
+
+const LAST_RUN_PATH = path.join(
+  path.dirname(new URL(import.meta.url).pathname),
+  "..",
+  "data",
+  "last-run.json",
+);
+
+function readLastRunWeek(): string | null {
+  try {
+    const raw = fs.readFileSync(LAST_RUN_PATH, "utf-8");
+    const parsed = JSON.parse(raw) as { weekLabel?: string };
+    return parsed.weekLabel ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLastRunWeek(weekLabel: string): void {
+  try {
+    fs.mkdirSync(path.dirname(LAST_RUN_PATH), { recursive: true });
+    fs.writeFileSync(
+      LAST_RUN_PATH,
+      JSON.stringify({ weekLabel, at: new Date().toISOString() }, null, 2),
+      "utf-8",
+    );
+  } catch (err) {
+    console.warn("[scheduler] Failed to write last-run marker:", err);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main pipeline
 // ---------------------------------------------------------------------------
 
 export async function runWeeklyPipeline(): Promise<void> {
+  // Overlap guard: if a cron fire lands while the previous run is still
+  // working, skip rather than race on the CSV / signals.md / GitHub push.
+  if (pipelineRunning) {
+    console.warn(
+      "[scheduler] Previous pipeline still running — skipping this trigger.",
+    );
+    return;
+  }
+  pipelineRunning = true;
+  try {
+    await runWeeklyPipelineInner();
+  } finally {
+    pipelineRunning = false;
+  }
+}
+
+async function runWeeklyPipelineInner(): Promise<void> {
   const startTime = Date.now();
   const runDate = new Date().toISOString().split("T")[0];
   const weekLabel = getWeekLabel();
@@ -171,7 +256,9 @@ export async function runWeeklyPipeline(): Promise<void> {
   // 6. Xpoz enrichment (only if S2 active)
   let xpozLines: string[] = [];
   if (s2Results.length > 0) {
-    console.log(`\n[5/8] Xpoz enrichment for ${s2Results.length} S2 ticker(s)...`);
+    console.log(
+      `\n[5/8] Xpoz enrichment for ${s2Results.length} S2 ticker(s)...`,
+    );
     const xpozResults = await enrichS2Tickers(s2Results.map((r) => r.ticker));
     xpozLines = formatXpozForTelegram(xpozResults);
   } else {
@@ -184,14 +271,28 @@ export async function runWeeklyPipeline(): Promise<void> {
   appendToSignalsMd(weekLabel, summary);
   console.log(`  → ${SIGNALS_MD_PATH}`);
 
-  // 8. Push to GitHub
+  // 8. Push to GitHub — wrapped: a 409 or network blip here must NOT
+  //    prevent the Telegram notification from going out. The "defensive"
+  //    posture added in commit af622ca previously covered only Xpoz and
+  //    Telegram; the GitHub push was still unguarded and could abort the
+  //    pipeline before step 9.
   console.log("\n[7/8] Pushing to GitHub...");
-  await pushWeeklyResults(csvPath, weekLabel, SIGNALS_MD_PATH);
+  try {
+    await pushWeeklyResults(csvPath, weekLabel, SIGNALS_MD_PATH);
+  } catch (err) {
+    console.error(
+      "[scheduler] GitHub push failed — continuing to notify:",
+      err,
+    );
+  }
 
   // 9. Send Telegram notification
   console.log("\n[8/8] Sending Telegram notification...");
   const telegramMsg = buildTelegramMessage(results, weekLabel, xpozLines);
   await sendTelegram(telegramMsg);
+
+  // Record successful completion so we can detect missed weeks on boot.
+  writeLastRunWeek(weekLabel);
 
   // 10. Stale signal check (informational)
   const activeSignals = [...s2Results, ...s1Results].map((r) => ({
@@ -212,6 +313,29 @@ export async function runWeeklyPipeline(): Promise<void> {
 
 const RUN_NOW = process.argv.includes("--run-now");
 
+/**
+ * Startup catch-up: if the current week never completed a run and we're
+ * already past Fri 18:00 MX, fire the pipeline once. Otherwise the VPS
+ * rebooting across the cron window silently drops that week's radar.
+ */
+function isPastWeeklyDeadline(now: Date = new Date()): boolean {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: SCHEDULE_TZ,
+    weekday: "short",
+    hour: "numeric",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(now);
+  const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
+  const hourStr = parts.find((p) => p.type === "hour")?.value ?? "0";
+  // `hour12: false` can yield "24" for midnight — normalize.
+  const hour = Math.min(Number(hourStr), 23);
+  // Past deadline if Fri >=18 or any Sat/Sun, in SCHEDULE_TZ.
+  if (weekday === "Fri" && hour >= 18) return true;
+  if (weekday === "Sat" || weekday === "Sun") return true;
+  return false;
+}
+
 if (RUN_NOW) {
   console.log("[scheduler] --run-now flag detected. Executing immediately...");
   runWeeklyPipeline().catch((err) => {
@@ -219,18 +343,41 @@ if (RUN_NOW) {
     process.exit(1);
   });
 } else {
-  // Schedule: Fridays at 18:00 MX time
-  // TZ env var should be set to America/Mexico_City in the systemd unit
-  const CRON_EXPR = "0 18 * * 5";
-  console.log(`[scheduler] Scheduled → Fridays 18:00 MX (cron: "${CRON_EXPR}")`);
-  console.log("[scheduler] Waiting for next run. Use --run-now to trigger immediately.");
+  console.log(
+    `[scheduler] Scheduled → Fridays 18:00 ${SCHEDULE_TZ} (cron: "${CRON_EXPR}")`,
+  );
+  console.log(
+    `[scheduler] Process TZ reported by Intl: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
+  );
+  console.log(
+    `[scheduler] Current week label (${SCHEDULE_TZ}): ${getWeekLabel()}`,
+  );
+  console.log(
+    "[scheduler] Waiting for next run. Use --run-now to trigger immediately.",
+  );
 
-  cron.schedule(CRON_EXPR, () => {
-    console.log("[scheduler] Cron triggered");
+  // Startup catch-up: run once if this week missed its window.
+  const thisWeek = getWeekLabel();
+  const lastRun = readLastRunWeek();
+  if (lastRun !== thisWeek && isPastWeeklyDeadline()) {
+    console.log(
+      `[scheduler] Catch-up: last run was ${lastRun ?? "(never)"}, current week ${thisWeek} past Fri 18:00 — firing now.`,
+    );
     runWeeklyPipeline().catch((err) => {
-      console.error("[scheduler] Pipeline failed:", err);
+      console.error("[scheduler] Catch-up pipeline failed:", err);
     });
-  }, {
-    timezone: "America/Mexico_City",
-  });
+  }
+
+  cron.schedule(
+    CRON_EXPR,
+    () => {
+      console.log("[scheduler] Cron triggered");
+      runWeeklyPipeline().catch((err) => {
+        console.error("[scheduler] Pipeline failed:", err);
+      });
+    },
+    {
+      timezone: SCHEDULE_TZ,
+    },
+  );
 }

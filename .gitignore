@@ -3,8 +3,12 @@ data/cache/
 data/radar.db
 data/radar.db-shm
 data/radar.db-wal
+data/last-run.json
 dist/
 *.js.map
 .env
 .env.local
 *.env
+# vitest coverage / caches
+coverage/
+.vitest/

@@ -11,33 +11,25 @@
 import fs from "fs";
 import path from "path";
 import type { ScanResult } from "./scanner.js";
+import { getWeekLabel as getWeekLabelTz } from "./time.js";
+import { csvRow } from "./csv.js";
 
 const RESULTS_DIR =
   process.env.RADAR_RESULTS_DIR ??
   new URL("../results", import.meta.url).pathname;
 
 function ensureResultsDir(): void {
-  if (!fs.existsSync(RESULTS_DIR)) fs.mkdirSync(RESULTS_DIR, { recursive: true });
+  if (!fs.existsSync(RESULTS_DIR))
+    fs.mkdirSync(RESULTS_DIR, { recursive: true });
 }
 
+/**
+ * ISO-8601 week label in America/Mexico_City. Re-exported so the old
+ * call sites don't need to change imports. Pass an explicit timezone
+ * (e.g. for tests) via the shared `time.ts` helper directly.
+ */
 export function getWeekLabel(): string {
-  const now = new Date();
-  // ISO 8601 week number — Thursday-based (ISO 8601 week belongs to the year of its Thursday)
-  const tmp = new Date(now.getTime());
-  tmp.setHours(0, 0, 0, 0);
-  // Set to nearest Thursday (ISO weeks start on Monday; Thursday determines the year)
-  tmp.setDate(tmp.getDate() + 3 - ((tmp.getDay() + 6) % 7));
-  const week1 = new Date(tmp.getFullYear(), 0, 4); // Jan 4 is always in week 1
-  const weekNum =
-    1 +
-    Math.round(
-      ((tmp.getTime() - week1.getTime()) / 86400000 -
-        3 +
-        ((week1.getDay() + 6) % 7)) /
-        7
-    );
-  const year = tmp.getFullYear();
-  return `${year}-W${String(weekNum).padStart(2, "0")}`;
+  return getWeekLabelTz();
 }
 
 function fmt(n: number | undefined, decimals = 1, suffix = ""): string {
@@ -63,7 +55,9 @@ export function printReport(results: ScanResult[], runDate: string): void {
 
   // ── S2 — ATENCIÓN ──────────────────────────────────────────────────
   if (s2.length > 0) {
-    console.log("\n  ▶▶ NIVEL 2 — ATENCIÓN (S2: AC cruzó el cero, AO negativo recuperándose)\n");
+    console.log(
+      "\n  ▶▶ NIVEL 2 — ATENCIÓN (S2: AC cruzó el cero, AO negativo recuperándose)\n",
+    );
     const header = [
       padRight("Ticker", 7),
       padRight("Sector", 6),
@@ -95,12 +89,16 @@ export function printReport(results: ScanResult[], runDate: string): void {
       console.log("  " + row);
     }
   } else {
-    console.log("\n  ▶▶ NIVEL 2 — ATENCIÓN (S2): Sin señales activas esta semana\n");
+    console.log(
+      "\n  ▶▶ NIVEL 2 — ATENCIÓN (S2): Sin señales activas esta semana\n",
+    );
   }
 
   // ── S1 — OBSERVACIÓN ────────────────────────────────────────────────
   if (s1.length > 0) {
-    console.log("\n  ▷  NIVEL 1 — OBSERVACIÓN (S1: AC rojo→verde, AO y AC negativos)\n");
+    console.log(
+      "\n  ▷  NIVEL 1 — OBSERVACIÓN (S1: AC rojo→verde, AO y AC negativos)\n",
+    );
     const header = [
       padRight("Ticker", 7),
       padRight("Sector", 6),
@@ -132,35 +130,62 @@ export function printReport(results: ScanResult[], runDate: string): void {
       console.log("  " + row);
     }
   } else {
-    console.log("\n  ▷  NIVEL 1 — OBSERVACIÓN (S1): Sin señales activas esta semana\n");
+    console.log(
+      "\n  ▷  NIVEL 1 — OBSERVACIÓN (S1): Sin señales activas esta semana\n",
+    );
   }
 
   // ── RESUMEN ─────────────────────────────────────────────────────────
   console.log("\n" + "─".repeat(100));
-  console.log(`  RESUMEN: ${results.length} tickers escaneados  |  S2 activos: ${s2.length}  |  S1 activos: ${s1.length}  |  Sin señal: ${none.length}`);
+  console.log(
+    `  RESUMEN: ${results.length} tickers escaneados  |  S2 activos: ${s2.length}  |  S1 activos: ${s1.length}  |  Sin señal: ${none.length}`,
+  );
   console.log("═".repeat(100) + "\n");
 }
 
-export function saveCSV(results: ScanResult[], runDate: string): string {
+export function saveCSV(results: ScanResult[], _runDate?: string): string {
   ensureResultsDir();
   const week = getWeekLabel();
   const filename = `radar_${week}.csv`;
   const filepath = path.join(RESULTS_DIR, filename);
 
   const headers = [
-    "ticker", "sector", "tier", "signalLevel", "signalDate", "weeksActive",
-    "ao", "ac", "acColor", "hrHistorical", "avgRetHistorical",
-    "maxDdHistorical", "aoLagHistorical", "aoRecovery", "aoBottomDepth",
+    "ticker",
+    "sector",
+    "tier",
+    "signalLevel",
+    "signalDate",
+    "weeksActive",
+    "ao",
+    "ac",
+    "acColor",
+    "hrHistorical",
+    "avgRetHistorical",
+    "maxDdHistorical",
+    "aoLagHistorical",
+    "aoRecovery",
+    "aoBottomDepth",
   ];
 
   const rows = results.map((r) => [
-    r.ticker, r.sector, r.tier, r.signalLevel, r.signalDate ?? "",
-    r.weeksActive, r.ao.toFixed(4), r.ac.toFixed(4), r.acColor,
-    r.hrHistorical ?? "", r.avgRetHistorical ?? "", r.maxDdHistorical ?? "",
-    r.aoLagHistorical ?? "", r.aoRecovery?.toFixed(4) ?? "", r.aoBottomDepth ?? "",
+    r.ticker,
+    r.sector,
+    r.tier,
+    r.signalLevel,
+    r.signalDate ?? "",
+    r.weeksActive,
+    r.ao.toFixed(4),
+    r.ac.toFixed(4),
+    r.acColor,
+    r.hrHistorical ?? "",
+    r.avgRetHistorical ?? "",
+    r.maxDdHistorical ?? "",
+    r.aoLagHistorical ?? "",
+    r.aoRecovery?.toFixed(4) ?? "",
+    r.aoBottomDepth ?? "",
   ]);
 
-  const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+  const csv = [csvRow(headers), ...rows.map(csvRow)].join("\n");
   fs.writeFileSync(filepath, csv, "utf-8");
   return filepath;
 }

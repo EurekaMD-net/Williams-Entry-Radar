@@ -22,8 +22,10 @@ function fmt(n: number | undefined, d = 1): string {
 /**
  * Escape characters that break Telegram Markdown (parse_mode=Markdown).
  * Only escapes underscore and asterisk — the main culprits in post titles.
+ * Exported so xpoz-enrich.ts (the only other Telegram-bound emitter)
+ * doesn't maintain a parallel copy.
  */
-function escapeMd(text: string): string {
+export function escapeMd(text: string): string {
   return text.replace(/[_*]/g, (c) => `\\${c}`);
 }
 
@@ -34,7 +36,7 @@ function escapeMd(text: string): string {
 export function buildTelegramMessage(
   results: ScanResult[],
   weekLabel: string,
-  xpozLines: string[] = []
+  xpozLines: string[] = [],
 ): string {
   const s2 = results.filter((r) => r.signalLevel === "S2");
   const s1 = results.filter((r) => r.signalLevel === "S1");
@@ -42,7 +44,9 @@ export function buildTelegramMessage(
   const lines: string[] = [];
 
   lines.push(`📡 *Williams Entry Radar — ${weekLabel}*`);
-  lines.push(`Escaneados: ${results.length} | S2: ${s2.length} | S1: ${s1.length}`);
+  lines.push(
+    `Escaneados: ${results.length} | S2: ${s2.length} | S1: ${s1.length}`,
+  );
   lines.push("");
 
   // S2 — ATENCIÓN
@@ -50,7 +54,9 @@ export function buildTelegramMessage(
     lines.push("▶▶ *NIVEL 2 — ATENCIÓN (S2)*");
     for (const r of s2) {
       const hr = r.hrHistorical ? `${fmt(r.hrHistorical)}%` : "—";
-      lines.push(`  \`${r.ticker}\` ${r.sector} T${r.tier} | HR:${hr} | AO:${fmt(r.ao, 3)} | AC:${fmt(r.ac, 3)} | ${r.weeksActive}w desde ${r.signalDate ?? "?"}`);
+      lines.push(
+        `  \`${r.ticker}\` ${r.sector} T${r.tier} | HR:${hr} | AO:${fmt(r.ao, 3)} | AC:${fmt(r.ac, 3)} | ${r.weeksActive}w desde ${r.signalDate ?? "?"}`,
+      );
     }
     // Xpoz enrichment (if any)
     if (xpozLines.length > 0) {
@@ -67,10 +73,14 @@ export function buildTelegramMessage(
   // S1 — OBSERVACIÓN (top 10 by HR to keep message manageable)
   if (s1.length > 0) {
     const top = s1.slice(0, 10);
-    lines.push(`▷ *NIVEL 1 — OBSERVACIÓN (S1)* ${s1.length > 10 ? `(top 10 de ${s1.length})` : ""}`);
+    lines.push(
+      `▷ *NIVEL 1 — OBSERVACIÓN (S1)* ${s1.length > 10 ? `(top 10 de ${s1.length})` : ""}`,
+    );
     for (const r of top) {
       const hr = r.hrHistorical ? `${fmt(r.hrHistorical)}%` : "—";
-      lines.push(`  \`${r.ticker}\` ${r.sector} T${r.tier} | HR:${hr} | AC:${r.acColor} | ${r.weeksActive}w`);
+      lines.push(
+        `  \`${r.ticker}\` ${r.sector} T${r.tier} | HR:${hr} | AC:${r.acColor} | ${r.weeksActive}w`,
+      );
     }
   } else {
     lines.push("▷ *NIVEL 1 — OBSERVACIÓN (S1):* Sin señales activas");
@@ -85,7 +95,9 @@ export function buildTelegramMessage(
  */
 export async function sendTelegram(text: string): Promise<boolean> {
   if (!BOT_TOKEN || !CHAT_ID) {
-    console.log("[notify] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — skipping notification");
+    console.log(
+      "[notify] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — skipping notification",
+    );
     return false;
   }
 
@@ -113,7 +125,9 @@ export async function sendTelegram(text: string): Promise<boolean> {
     console.log("[notify] Telegram message sent ✓");
     return true;
   } catch (err) {
-    console.error(`[notify] Failed to send Telegram message: ${(err as Error).message}`);
+    console.error(
+      `[notify] Failed to send Telegram message: ${(err as Error).message}`,
+    );
     return false;
   }
 }

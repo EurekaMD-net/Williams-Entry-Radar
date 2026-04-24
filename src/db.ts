@@ -21,11 +21,11 @@ import fs from "fs";
 
 export interface WeeklyBarRow {
   ticker: string;
-  date: string;       // YYYY-MM-DD
+  date: string; // YYYY-MM-DD
   open: number;
   high: number;
   low: number;
-  close: number;      // adjusted close
+  close: number; // adjusted close
   volume: number;
   fetched_at: string; // ISO timestamp of the fetch that produced this row
 }
@@ -35,7 +35,7 @@ export type TickerStatus = "active" | "watchlist" | "discarded";
 export interface TickerRegistryRow {
   ticker: string;
   sector: string;
-  tier: number;          // 1 | 2 | 3
+  tier: number; // 1 | 2 | 3
   status: TickerStatus;
   added_at: string;
   discarded_at: string | null;
@@ -52,7 +52,7 @@ const DEFAULT_DB_PATH = path.join(
   path.dirname(new URL(import.meta.url).pathname),
   "..",
   "data",
-  "radar.db"
+  "radar.db",
 );
 
 let _db: Database.Database | null = null;
@@ -76,6 +76,9 @@ export function getDb(): Database.Database {
 // ---------------------------------------------------------------------------
 
 function applySchema(db: Database.Database): void {
+  // OHLC CHECK constraints are DATA-QUALITY guards: without them, a
+  // botched fetch parsing a zero or inverted bar would silently land in
+  // the cache and contaminate every downstream backtest/scan.
   db.exec(`
     CREATE TABLE IF NOT EXISTS weekly_bars (
       ticker      TEXT    NOT NULL,
@@ -86,7 +89,17 @@ function applySchema(db: Database.Database): void {
       close       REAL    NOT NULL,
       volume      INTEGER NOT NULL,
       fetched_at  TEXT    NOT NULL,
-      PRIMARY KEY (ticker, date)
+      PRIMARY KEY (ticker, date),
+      CHECK (open   > 0),
+      CHECK (high   > 0),
+      CHECK (low    > 0),
+      CHECK (close  > 0),
+      CHECK (high  >= low),
+      CHECK (high  >= open),
+      CHECK (high  >= close),
+      CHECK (low   <= open),
+      CHECK (low   <= close),
+      CHECK (volume >= 0)
     );
 
     CREATE TABLE IF NOT EXISTS ticker_registry (
@@ -183,15 +196,17 @@ export function isCacheValid(ticker: string, ttlDays = 6): boolean {
 export function ensureTicker(
   ticker: string,
   sector: string,
-  tier: number
+  tier: number,
 ): void {
   const db = getDb();
-  db.prepare(`
+  db.prepare(
+    `
     INSERT OR IGNORE INTO ticker_registry
       (ticker, sector, tier, status, added_at)
     VALUES
       (?, ?, ?, 'active', ?)
-  `).run(ticker, sector, tier, new Date().toISOString());
+  `,
+  ).run(ticker, sector, tier, new Date().toISOString());
 }
 
 /**
@@ -200,13 +215,15 @@ export function ensureTicker(
  */
 export function discardTicker(ticker: string, reason: string): void {
   const db = getDb();
-  db.prepare(`
+  db.prepare(
+    `
     UPDATE ticker_registry
     SET status = 'discarded',
         discarded_at = ?,
         discard_reason = ?
     WHERE ticker = ?
-  `).run(new Date().toISOString(), reason, ticker);
+  `,
+  ).run(new Date().toISOString(), reason, ticker);
 }
 
 /**
@@ -215,18 +232,22 @@ export function discardTicker(ticker: string, reason: string): void {
 export function recordFetch(ticker: string, success: boolean): void {
   const db = getDb();
   if (success) {
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE ticker_registry
       SET last_fetched_at = ?,
           fetch_errors = 0
       WHERE ticker = ?
-    `).run(new Date().toISOString(), ticker);
+    `,
+    ).run(new Date().toISOString(), ticker);
   } else {
-    db.prepare(`
+    db.prepare(
+      `
       UPDATE ticker_registry
       SET fetch_errors = fetch_errors + 1
       WHERE ticker = ?
-    `).run(ticker);
+    `,
+    ).run(ticker);
   }
 }
 
@@ -236,7 +257,9 @@ export function recordFetch(ticker: string, success: boolean): void {
 export function getActiveTickers(): TickerRegistryRow[] {
   const db = getDb();
   return db
-    .prepare("SELECT * FROM ticker_registry WHERE status != 'discarded' ORDER BY tier, ticker")
+    .prepare(
+      "SELECT * FROM ticker_registry WHERE status != 'discarded' ORDER BY tier, ticker",
+    )
     .all() as TickerRegistryRow[];
 }
 
@@ -262,18 +285,26 @@ export function getDbStats(): {
   newestBar: string | null;
 } {
   const db = getDb();
-  const counts = db.prepare(`
+  const counts = db
+    .prepare(
+      `
     SELECT
       COUNT(*) as total,
       SUM(CASE WHEN status != 'discarded' THEN 1 ELSE 0 END) as active,
       SUM(CASE WHEN status  = 'discarded' THEN 1 ELSE 0 END) as discarded
     FROM ticker_registry
-  `).get() as { total: number; active: number; discarded: number };
+  `,
+    )
+    .get() as { total: number; active: number; discarded: number };
 
-  const barStats = db.prepare(`
+  const barStats = db
+    .prepare(
+      `
     SELECT COUNT(*) as n, MIN(date) as oldest, MAX(date) as newest
     FROM weekly_bars
-  `).get() as { n: number; oldest: string | null; newest: string | null };
+  `,
+    )
+    .get() as { n: number; oldest: string | null; newest: string | null };
 
   return {
     totalTickers: counts.total,

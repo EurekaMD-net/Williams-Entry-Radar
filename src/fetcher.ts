@@ -6,12 +6,26 @@
  * Cache-first: skip fetch if data is < 6 days old.
  */
 
-import { isCacheValid, readCache, writeCache, recordFetchError } from "./cache.js";
+import {
+  isCacheValid,
+  readCache,
+  writeCache,
+  recordFetchError,
+} from "./cache.js";
 
-const AV_API_KEY = process.env.AV_API_KEY ?? "";
-if (!AV_API_KEY) throw new Error("AV_API_KEY environment variable is required");
 const BASE_URL = "https://www.alphavantage.co/query";
 const DELAY_MS = 1100; // 1.1s — safely under 75 req/min, avoids burst detection
+
+/**
+ * Check AV_API_KEY lazily (at call time, not at import time). Throwing at
+ * import breaks test harnesses that only need to exercise cache paths
+ * without hitting the network.
+ */
+function getApiKey(): string {
+  const key = process.env.AV_API_KEY ?? "";
+  if (!key) throw new Error("AV_API_KEY environment variable is required");
+  return key;
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -27,11 +41,11 @@ export interface WeeklyBar {
 }
 
 async function fetchFromAV(ticker: string): Promise<WeeklyBar[]> {
-  const url = `${BASE_URL}?function=TIME_SERIES_WEEKLY_ADJUSTED&symbol=${ticker}&apikey=${AV_API_KEY}&datatype=json`;
+  const url = `${BASE_URL}?function=TIME_SERIES_WEEKLY_ADJUSTED&symbol=${ticker}&apikey=${getApiKey()}&datatype=json`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${ticker}`);
 
-  const json = await res.json() as Record<string, unknown>;
+  const json = (await res.json()) as Record<string, unknown>;
 
   // Check for error / rate limit
   if ("Note" in json || "Information" in json) {
@@ -39,7 +53,9 @@ async function fetchFromAV(ticker: string): Promise<WeeklyBar[]> {
     throw new Error(`AV API message for ${ticker}: ${msg}`);
   }
 
-  const series = json["Weekly Adjusted Time Series"] as Record<string, Record<string, string>> | undefined;
+  const series = json["Weekly Adjusted Time Series"] as
+    | Record<string, Record<string, string>>
+    | undefined;
   if (!series) throw new Error(`No weekly data returned for ${ticker}`);
 
   // Write raw to cache
@@ -48,7 +64,9 @@ async function fetchFromAV(ticker: string): Promise<WeeklyBar[]> {
   return parseSeries(series);
 }
 
-function parseSeries(series: Record<string, Record<string, string>>): WeeklyBar[] {
+function parseSeries(
+  series: Record<string, Record<string, string>>,
+): WeeklyBar[] {
   return Object.entries(series)
     .map(([date, vals]) => ({
       date,
@@ -75,7 +93,12 @@ export async function fetchTicker(ticker: string): Promise<WeeklyBar[]> {
 
 export async function fetchAll(
   tickers: string[],
-  onProgress?: (done: number, total: number, ticker: string, fromCache: boolean) => void
+  onProgress?: (
+    done: number,
+    total: number,
+    ticker: string,
+    fromCache: boolean,
+  ) => void,
 ): Promise<Map<string, WeeklyBar[]>> {
   const results = new Map<string, WeeklyBar[]>();
 
