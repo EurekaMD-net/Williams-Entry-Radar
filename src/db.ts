@@ -89,14 +89,12 @@ function applySchema(db: Database.Database): void {
       PRIMARY KEY (ticker, date)
     );
 
-    CREATE INDEX IF NOT EXISTS idx_weekly_bars_ticker_date
-      ON weekly_bars (ticker, date DESC);
-
     CREATE TABLE IF NOT EXISTS ticker_registry (
       ticker          TEXT    PRIMARY KEY,
       sector          TEXT    NOT NULL,
       tier            INTEGER NOT NULL DEFAULT 2,
-      status          TEXT    NOT NULL DEFAULT 'active',
+      status          TEXT    NOT NULL DEFAULT 'active'
+                              CHECK (status IN ('active', 'watchlist', 'discarded')),
       added_at        TEXT    NOT NULL,
       discarded_at    TEXT,
       discard_reason  TEXT,
