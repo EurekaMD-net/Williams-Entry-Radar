@@ -55,16 +55,19 @@ export function detectSignalsS2(ticker: string, bars: IndicatorBar[]): SignalS2[
     const aoAtRecoveryStart = bars[recoveryStart].ao;
     if (curr.ao <= aoAtRecoveryStart) continue; // AO not recovering
 
-    // Condition 4: AO hit its bottom within the lookback window
+    // Condition 4: AO hit its bottom within the lookback window AND the bottom
+    // must NOT be at the very edge of the window (avoids catching plateaus where
+    // the minimum just happens to be the oldest bar we can see).
     const bottomStart = Math.max(0, i - AO_BOTTOM_LOOKBACK);
     const windowAos = bars.slice(bottomStart, i + 1).map((b) => b.ao);
     const minAo = Math.min(...windowAos);
     const minAoIdx = windowAos.indexOf(minAo) + bottomStart;
     const weeksSinceBottom = i - minAoIdx;
 
-    // AO bottom must be recent (within lookback), not at the edge of the window
-    // This ensures we're not catching a signal where AO bottomed 20 weeks ago
-    if (weeksSinceBottom > AO_BOTTOM_LOOKBACK) continue;
+    // Reject if the bottom is AT the edge of the window (oldest bar in window).
+    // This means we can't distinguish "recently bottomed" from "the window just
+    // ran out of history". Require at least 1 bar of context before the bottom.
+    if (minAoIdx <= bottomStart) continue;
 
     const aoRecovery = curr.ao - minAo; // how much AO has recovered from its bottom
 

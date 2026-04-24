@@ -34,8 +34,13 @@ const TIER1: TickerMeta[] = [
   { ticker: "LMT",  sector: "XLI", tier: 1, hrHistorical: 66.7, avgRetHistorical: 5.20, maxDdHistorical: -3.8, aoLagHistorical: 10.5 },
   { ticker: "PG",   sector: "XLP", tier: 1, hrHistorical: 65.4, avgRetHistorical: 3.10, maxDdHistorical: -3.2, aoLagHistorical: 13.8 },
   { ticker: "MO",   sector: "XLP", tier: 1, hrHistorical: 69.4, avgRetHistorical: 2.80, maxDdHistorical: -4.1, aoLagHistorical: 11.2 },
-  { ticker: "SPY",  sector: "SPY", tier: 1, hrHistorical: undefined }, // macro reference
 ];
+
+/**
+ * SPY is a macro reference only — NOT included in the operational scan.
+ * Use it for regime context (bull/bear filter) but never generate S1/S2 alerts for it.
+ */
+export const SPY_MACRO_REF: TickerMeta = { ticker: "SPY", sector: "SPY", tier: 1, hrHistorical: undefined };
 
 // Tier 2 — Remaining Phase 2 universe
 const TIER2_XLU: TickerMeta[] = [

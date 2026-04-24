@@ -42,7 +42,7 @@ export async function fetchWeeklyData(ticker: string): Promise<WeeklyCandle[]> {
         high,
         low,
         close: parseFloat(bar["5. adjusted close"]),
-        volume: parseFloat(bar["6. volume"]),
+        volume: parseInt(bar["6. volume"], 10),
         midpoint: (high + low) / 2,
       };
     })
