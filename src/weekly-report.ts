@@ -20,7 +20,7 @@ function ensureResultsDir(): void {
   if (!fs.existsSync(RESULTS_DIR)) fs.mkdirSync(RESULTS_DIR, { recursive: true });
 }
 
-function getWeekLabel(): string {
+export function getWeekLabel(): string {
   const now = new Date();
   // ISO 8601 week number — Thursday-based (ISO 8601 week belongs to the year of its Thursday)
   const tmp = new Date(now.getTime());

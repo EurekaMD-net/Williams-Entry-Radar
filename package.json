@@ -6,6 +6,8 @@
   "scripts": {
     "backtest": "npx tsx src/backtest.ts",
     "scan": "npx tsx src/scan.ts",
+    "scheduler": "npx tsx src/scheduler.ts",
+    "run-now": "npx tsx src/scheduler.ts --run-now",
     "typecheck": "npx tsc --noEmit"
   },
   "devDependencies": {
@@ -15,6 +17,8 @@
   },
   "dependencies": {
     "@types/better-sqlite3": "^7.6.13",
-    "better-sqlite3": "^12.9.0"
+    "@types/node-cron": "^3.0.11",
+    "better-sqlite3": "^12.9.0",
+    "node-cron": "^4.2.1"
   }
 }
