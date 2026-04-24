@@ -20,6 +20,14 @@ function fmt(n: number | undefined, d = 1): string {
 }
 
 /**
+ * Escape characters that break Telegram Markdown (parse_mode=Markdown).
+ * Only escapes underscore and asterisk — the main culprits in post titles.
+ */
+function escapeMd(text: string): string {
+  return text.replace(/[_*]/g, (c) => `\\${c}`);
+}
+
+/**
  * Build a concise Telegram message from scan results.
  * Telegram supports MarkdownV2 — we use simple Markdown (parse_mode=Markdown).
  */

@@ -53,6 +53,23 @@ const SIGNALS_MD_PATH = path.join(
 );
 
 function appendToSignalsMd(weekLabel: string, summary: string): void {
+  // Idempotent: if this week's section already exists, overwrite it instead of appending.
+  // Prevents duplicate entries when --run-now is used more than once in the same week.
+  if (fs.existsSync(SIGNALS_MD_PATH)) {
+    const existing = fs.readFileSync(SIGNALS_MD_PATH, "utf-8");
+    const sectionStart = `## ${weekLabel}`;
+    if (existing.includes(sectionStart)) {
+      // Replace the existing section for this week
+      const beforeSection = existing.slice(0, existing.indexOf(sectionStart));
+      const afterSectionMatch = existing.slice(existing.indexOf(sectionStart) + sectionStart.length);
+      // Find the next section (## ...) or end of file
+      const nextSectionIdx = afterSectionMatch.search(/\n## /);
+      const afterSection = nextSectionIdx === -1 ? "" : afterSectionMatch.slice(nextSectionIdx);
+      const updated = beforeSection + `${sectionStart}\n\n${summary}\n\n---\n\n` + afterSection;
+      fs.writeFileSync(SIGNALS_MD_PATH, updated, "utf-8");
+      return;
+    }
+  }
   const header = fs.existsSync(SIGNALS_MD_PATH) ? "" : "# Williams Entry Radar — Señales Semanales\n\n";
   const entry = `## ${weekLabel}\n\n${summary}\n\n---\n\n`;
   fs.appendFileSync(SIGNALS_MD_PATH, header + entry, "utf-8");

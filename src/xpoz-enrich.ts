@@ -22,7 +22,11 @@ export interface XpozResult {
 }
 
 const XPOZ_API_KEY = process.env.XPOZ_API_KEY ?? "";
-const XPOZ_BASE = "https://api.xpoz.io";
+// NOTE: The Xpoz REST API base URL and endpoint paths below are placeholders.
+// The production Xpoz integration uses an MCP server (not direct HTTP).
+// Before activating enrichment, verify the correct REST endpoint with the Xpoz MCP server config.
+// The module fails gracefully when XPOZ_API_KEY is not set — enrichment is skipped silently.
+const XPOZ_BASE = process.env.XPOZ_BASE_URL ?? "https://api.xpoz.io";
 
 // Finance subreddits — focused to avoid noise
 const TARGET_SUBREDDITS = [
@@ -151,10 +155,18 @@ export async function enrichS2Tickers(tickers: string[]): Promise<XpozResult[]> 
 /**
  * Format Xpoz results as Telegram-ready lines.
  */
+/**
+ * Escape characters that break Telegram Markdown (parse_mode=Markdown).
+ */
+function escapeMd(text: string): string {
+  return text.replace(/[_*]/g, (c) => `\\${c}`);
+}
+
 export function formatXpozForTelegram(results: XpozResult[]): string[] {
   return results.map((r) => {
     const icon = r.confluence === "HIGH" ? "🔥" : r.confluence === "MED" ? "📊" : r.confluence === "LOW" ? "💬" : "🔇";
-    const top = r.topPost ? ` — "${r.topPost.slice(0, 60)}${r.topPost.length > 60 ? "…" : ""}"` : "";
+    const rawTop = r.topPost ? r.topPost.slice(0, 60) + (r.topPost.length > 60 ? "…" : "") : "";
+    const top = rawTop ? ` — "${escapeMd(rawTop)}"` : "";
     return `${icon} \`${r.ticker}\` ${r.confluence} (${r.posts} posts)${top}`;
   });
 }

@@ -38,7 +38,9 @@ export interface ScanResult {
   aoBottomDepth?: number;
 }
 
-const SIGNAL_LOOKBACK_WEEKS = 8; // only show signals from last N weeks
+// Show signals active for up to 20 weeks — matches the discard rule in expand.ts.
+// A signal is NEVER silently dropped before 20 weeks; explicit discard is required.
+const SIGNAL_LOOKBACK_WEEKS = 20;
 
 export function scanTicker(ticker: string, bars: WeeklyBar[]): ScanResult {
   const meta = getMetaForTicker(ticker);
