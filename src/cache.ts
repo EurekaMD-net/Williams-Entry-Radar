@@ -1,71 +1,147 @@
 /**
- * cache.ts — Persistent cache for Williams Entry Radar
+ * cache.ts — SQLite-backed cache adapter for Williams Entry Radar
  *
- * Cache lives in /tmp/williams-entry-radar/data/cache/
- * TTL: 6 days (fresh weekly data on each run)
- * Format: {ticker}.json with { fetchedAt: ISO string, data: WeeklyBar[] }
+ * Replaces the old JSON-file cache. All data lives in radar.db (weekly_bars table).
+ * Data persists across sessions and server restarts.
+ * Tickers are NEVER deleted — only status changes (active/discarded).
+ *
+ * Public API is intentionally identical to the old cache.ts so fetcher.ts
+ * requires no changes to its import surface.
  */
 
-import fs from "fs";
-import path from "path";
+import {
+  isCacheValid as dbIsCacheValid,
+  loadBars,
+  upsertBars,
+  ensureTicker,
+  recordFetch,
+  getDbStats,
+  getLastFetchedAt,
+  type WeeklyBarRow,
+} from "./db.js";
+import { UNIVERSE } from "./universe.js";
 
-export interface CachedData {
-  fetchedAt: string;
-  ticker: string;
-  data: Record<string, { open: string; high: string; low: string; close: string; volume: string; "adjusted close": string }>;
-}
+export type { WeeklyBarRow };
 
-const CACHE_DIR = path.join("/tmp/williams-entry-radar/data/cache");
-const TTL_DAYS = 6;
+// Raw AV series format (keyed by date string)
+export type AVRawSeries = Record<
+  string,
+  {
+    "1. open": string;
+    "2. high": string;
+    "3. low": string;
+    "5. adjusted close": string;
+    "6. volume"?: string;
+    "5. volume"?: string;
+  }
+>;
 
-function ensureCacheDir(): void {
-  if (!fs.existsSync(CACHE_DIR)) {
-    fs.mkdirSync(CACHE_DIR, { recursive: true });
+// ---------------------------------------------------------------------------
+// Ensure all tickers in the universe are registered
+// ---------------------------------------------------------------------------
+export function seedRegistry(): void {
+  for (const meta of UNIVERSE) {
+    ensureTicker(meta.ticker, meta.sector, meta.tier);
   }
 }
 
-function cachePathFor(ticker: string): string {
-  return path.join(CACHE_DIR, `${ticker}.json`);
-}
+// ---------------------------------------------------------------------------
+// Core cache operations (replaces JSON file API)
+// ---------------------------------------------------------------------------
 
+/**
+ * Returns true if ticker has fresh data (< 6 days old).
+ * Replaces: isCacheValid(ticker) from old cache.ts
+ */
 export function isCacheValid(ticker: string): boolean {
-  const p = cachePathFor(ticker);
-  if (!fs.existsSync(p)) return false;
-
-  try {
-    const raw = JSON.parse(fs.readFileSync(p, "utf-8")) as CachedData;
-    const fetchedAt = new Date(raw.fetchedAt);
-    const ageMs = Date.now() - fetchedAt.getTime();
-    const ageDays = ageMs / (1000 * 60 * 60 * 24);
-    return ageDays < TTL_DAYS;
-  } catch {
-    return false;
-  }
+  return dbIsCacheValid(ticker, 6);
 }
 
-export function readCache(ticker: string): CachedData | null {
-  const p = cachePathFor(ticker);
-  if (!fs.existsSync(p)) return null;
-  try {
-    return JSON.parse(fs.readFileSync(p, "utf-8")) as CachedData;
-  } catch {
-    return null;
-  }
-}
+/**
+ * Write AV raw series to SQLite.
+ * Replaces: writeCache(ticker, data) from old cache.ts
+ */
+export function writeCache(ticker: string, series: AVRawSeries): void {
+  const fetchedAt = new Date().toISOString();
 
-export function writeCache(ticker: string, data: CachedData["data"]): void {
-  ensureCacheDir();
-  const payload: CachedData = {
-    fetchedAt: new Date().toISOString(),
+  const rows: WeeklyBarRow[] = Object.entries(series).map(([date, vals]) => ({
     ticker,
-    data,
-  };
-  fs.writeFileSync(cachePathFor(ticker), JSON.stringify(payload), "utf-8");
+    date,
+    open: parseFloat(vals["1. open"]),
+    high: parseFloat(vals["2. high"]),
+    low: parseFloat(vals["3. low"]),
+    close: parseFloat(vals["5. adjusted close"]),
+    volume: parseInt(
+      vals["6. volume"] ?? vals["5. volume"] ?? "0",
+      10
+    ),
+    fetched_at: fetchedAt,
+  }));
+
+  upsertBars(rows);
+  recordFetch(ticker, true);
 }
 
-export function getCacheStats(): { total: number; valid: number; stale: number } {
-  ensureCacheDir();
-  const files = fs.readdirSync(CACHE_DIR).filter((f) => f.endsWith(".json"));
-  const valid = files.filter((f) => isCacheValid(f.replace(".json", ""))).length;
-  return { total: files.length, valid, stale: files.length - valid };
+/**
+ * Read bars from SQLite for a ticker.
+ * Returns null if no data (so fetcher.ts knows to hit AV).
+ * Replaces: readCache(ticker) from old cache.ts
+ */
+export function readCache(ticker: string): AVRawSeries | null {
+  const bars = loadBars(ticker);
+  if (bars.length === 0) return null;
+
+  // Re-serialize to AVRawSeries format so fetcher.ts parseSeries() works unchanged
+  const series: AVRawSeries = {};
+  for (const bar of bars) {
+    series[bar.date] = {
+      "1. open": bar.open.toString(),
+      "2. high": bar.high.toString(),
+      "3. low": bar.low.toString(),
+      "5. adjusted close": bar.close.toString(),
+      "6. volume": bar.volume.toString(),
+    };
+  }
+  return series;
+}
+
+/**
+ * Record a failed fetch for error tracking.
+ */
+export function recordFetchError(ticker: string): void {
+  recordFetch(ticker, false);
+}
+
+// ---------------------------------------------------------------------------
+// Stats (replaces getCacheStats)
+// ---------------------------------------------------------------------------
+export function getCacheStats(): {
+  total: number;
+  valid: number;
+  stale: number;
+  dbPath: string;
+  totalBars: number;
+  oldestBar: string | null;
+  newestBar: string | null;
+} {
+  const stats = getDbStats();
+  const allTickers = UNIVERSE.map((u) => u.ticker);
+  const valid = allTickers.filter((t) => isCacheValid(t)).length;
+  const withData = allTickers.filter(
+    (t) => (getLastFetchedAt(t) ?? null) !== null
+  ).length;
+
+  const dbPath =
+    process.env.RADAR_DB_PATH ??
+    new URL("../data/radar.db", import.meta.url).pathname;
+
+  return {
+    total: withData,
+    valid,
+    stale: withData - valid,
+    dbPath,
+    totalBars: stats.totalBars,
+    oldestBar: stats.oldestBar,
+    newestBar: stats.newestBar,
+  };
 }

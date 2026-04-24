@@ -6,7 +6,7 @@
  * Cache-first: skip fetch if data is < 6 days old.
  */
 
-import { isCacheValid, readCache, writeCache } from "./cache.js";
+import { isCacheValid, readCache, writeCache, recordFetchError } from "./cache.js";
 
 const AV_API_KEY = process.env.AV_API_KEY ?? "";
 if (!AV_API_KEY) throw new Error("AV_API_KEY environment variable is required");
@@ -43,7 +43,7 @@ async function fetchFromAV(ticker: string): Promise<WeeklyBar[]> {
   if (!series) throw new Error(`No weekly data returned for ${ticker}`);
 
   // Write raw to cache
-  writeCache(ticker, series as Parameters<typeof writeCache>[1]);
+  writeCache(ticker, series as import("./cache.js").AVRawSeries);
 
   return parseSeries(series);
 }
@@ -62,10 +62,10 @@ function parseSeries(series: Record<string, Record<string, string>>): WeeklyBar[
 }
 
 export async function fetchTicker(ticker: string): Promise<WeeklyBar[]> {
-  // Cache-first
+  // Cache-first — readCache now returns AVRawSeries directly
   if (isCacheValid(ticker)) {
     const cached = readCache(ticker);
-    if (cached) return parseSeries(cached.data as Parameters<typeof parseSeries>[0]);
+    if (cached) return parseSeries(cached as Parameters<typeof parseSeries>[0]);
   }
 
   // Fetch from AV
@@ -93,6 +93,7 @@ export async function fetchAll(
       onProgress?.(i + 1, tickers.length, ticker, fromCache);
     } catch (err) {
       console.error(`  ✗ ${ticker}: ${err}`);
+      recordFetchError(ticker);
       results.set(ticker, []); // empty = skip in scanner
     }
   }

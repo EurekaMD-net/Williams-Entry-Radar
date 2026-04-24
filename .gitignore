@@ -1,5 +1,8 @@
 node_modules/
 data/cache/
+data/radar.db
+data/radar.db-shm
+data/radar.db-wal
 dist/
 *.js.map
 .env
