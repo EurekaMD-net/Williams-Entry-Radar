@@ -170,18 +170,45 @@ scan. Xpoz enrichment routes through the local `xpoz-pipeline` service
 (`/root/claude/projects/xpoz-pipeline/`) — the previous direct REST call to
 `api.xpoz.io` was wired against a nonexistent endpoint.
 
-### W17-2026 First Run — Results
+### W17-2026 Results — 8 Sectors (157 tickers)
 
-**77 tickers scanned | 17 S1 active | 0 S2 active**
+**157 tickers scanned | 32 signals active | 0 S2 pure**
 
-| Tier | Ticker                   | Signal | Weeks | HR Historical              |
-| ---- | ------------------------ | ------ | ----- | -------------------------- |
-| 1    | **PG**                   | S1     | 1     | 65.4%                      |
-| 2    | CLX, GIS, SYY, KMB, MDLZ | S1     | 1-2   | XLP sector-wide correction |
-| 2    | BA, EMR, GE, MMM, CTAS   | S1     | 1-2   | XLI correction             |
-| 2    | AES, NRG, ES             | S1     | 1-2   | XLU partial correction     |
+Universe expanded from 77 → 157 tickers by adding XLF, XLV, XLB, XLY (80 new tickers, Tier 2, backtested W17-2026).
 
-0 S2 signals = no confirmed reversals yet. Market in early correction phase. S1s are observation, not action.
+| Type | Count | Notes |
+|------|-------|-------|
+| S2 Pure | 0 | No clean confirmations |
+| S2 Degraded | 11 | AO already recovering — late entry |
+| S1 Observation | 21 | Start watching |
+| Tickers in lows (< p15%) | 9 | Unusual concentration |
+
+**Top signals by quality:**
+
+| Ticker | Sector | Type | Tier | HR | Percentile | Note |
+|--------|--------|------|------|----|-----------|------|
+| **PG** | XLP | S1 | **1** | **65.4%** | p15% | Only Tier 1 active |
+| BSX | XLV | S1 | 2 | — | **p1%** | Absolute lows |
+| NKE | XLY | S1 | 2 | — | p4% | Structural lows |
+| CLX | XLP | S1 | 2 | — | p3% | |
+| GIS | XLP | S1 | 2 | — | p0% | Minimum absolute |
+| SYK | XLV | S1 | 2 | — | p7% | |
+| RPM | XLB | S2D | 2 | — | p29% | |
+
+**Sector summary:**
+
+| Sector | Signals | Type | Notes |
+|--------|---------|------|-------|
+| XLY (new) | 7 | 4×S2D + 3×S1 | Most active — HD, NKE, TSLA |
+| XLV (new) | 5 | S1 | Healthcare at lows: BSX p1%, SYK p7% |
+| XLB (new) | 6 | 4×S2D + 2×S1 | RPM S2D at lows, MOS S1 p9% |
+| XLP | 5 | S1 | PG T1, GIS p0%, HRL p9% |
+| XLI | 4 | 2×S2D + 2×S1 | BA, EMR in S2D |
+| XLU | 1 | S2D | NRG |
+| XLF (new) | 0 | — | No signals |
+| XLE | 0 | — | No signals |
+
+9 tickers simultaneously at percentile < 15% is unusual — broad correction still in early phase. 0 S2 pure = no confirmed reversals. S1s are observation, not action.
 
 ### Usage
 
