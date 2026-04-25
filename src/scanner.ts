@@ -1,20 +1,18 @@
 /**
  * scanner.ts — Weekly scan engine for Williams Entry Radar
  *
- * For each ticker:
- *   1. Load weekly bars from cache / fetch
- *   2. Calculate AO + AC indicators
- *   3. Check last bar for active S1 or S2 signal
- *   4. Return structured alert
+ * Evaluates ONLY the last bar (current week). No lookback windows for signal validity.
  *
- * S1 — Observation: first AC green with AO<0 and AC<0
- * S2 — Attention: AC crosses zero, AO<0 but recovering from bottom
+ * S1 — Observation: last bar has AO<0, AC<0, AC[t] > AC[t-1] (AC turned green)
+ * S2 — Attention: last bar has AO<0, AC[t-1]<0 AND AC[t]>=0 (AC just crossed zero)
+ *
+ * Price context (104-week window):
+ *   nearLows  — close in bottom 30th percentile of 104-week range → doubly interesting
+ *   ranging   — price range over last 12 weeks < 15% of avg price → lateral, low conviction
  */
 
 import type { WeeklyBar } from "./fetcher.js";
 import { calculateIndicators } from "./indicators.js";
-import { detectSignals } from "./signals.js";
-import { detectSignalsS2 } from "./signals-s2.js";
 import { getMetaForTicker } from "./universe.js";
 
 export type SignalLevel = "S2" | "S1" | "none";
@@ -25,40 +23,69 @@ export interface ScanResult {
   tier: 1 | 2;
   signalLevel: SignalLevel;
   signalDate: string | null;
-  weeksActive: number;        // how many weeks since signal triggered
+  weeksActive: number;        // always 0 — signal is this week only
   ao: number;
   ac: number;
   acColor: string;
-  hrHistorical?: number;      // from Phase 2 backtest
+  hrHistorical?: number;
   avgRetHistorical?: number;
   maxDdHistorical?: number;
-  aoLagHistorical?: number;   // expected weeks until AO confirms
-  // S2-specific
-  aoRecovery?: number;
-  aoBottomDepth?: number;
+  aoLagHistorical?: number;
+  // Price context
+  nearLows: boolean;          // close in bottom 30% of 104-week range
+  ranging: boolean;           // price lateralizing — low conviction signal
+  pricePercentile: number;    // 0-100, where close sits in 104-week range
 }
 
-// Show signals active for up to 20 weeks — matches the discard rule in expand.ts.
-// A signal is NEVER silently dropped before 20 weeks; explicit discard is required.
-const SIGNAL_LOOKBACK_WEEKS = 20;
+const PRICE_LOOKBACK_WEEKS = 104;
+const RANGE_CHECK_WEEKS    = 12;
+const NEAR_LOWS_PCT        = 30;    // percentile threshold for "near lows"
+const RANGING_THRESHOLD    = 0.15;  // 15% range/avg price = lateral
+
+function priceContext(bars: WeeklyBar[]): { nearLows: boolean; ranging: boolean; pricePercentile: number } {
+  // Use up to last 104 weekly bars
+  const window104 = bars.slice(-PRICE_LOOKBACK_WEEKS);
+  const closes104 = window104.map((b) => b.close);
+  const min104 = Math.min(...closes104);
+  const max104 = Math.max(...closes104);
+  const currentClose = closes104[closes104.length - 1];
+
+  const range104 = max104 - min104;
+  const pricePercentile = range104 === 0 ? 50 : ((currentClose - min104) / range104) * 100;
+  const nearLows = pricePercentile <= NEAR_LOWS_PCT;
+
+  // Ranging check: last 12 weeks
+  const window12 = bars.slice(-RANGE_CHECK_WEEKS);
+  const closes12 = window12.map((b) => b.close);
+  const min12 = Math.min(...closes12);
+  const max12 = Math.max(...closes12);
+  const avg12 = closes12.reduce((s, v) => s + v, 0) / closes12.length;
+  const ranging = avg12 > 0 && (max12 - min12) / avg12 < RANGING_THRESHOLD;
+
+  return { nearLows, ranging, pricePercentile: Math.round(pricePercentile) };
+}
 
 export function scanTicker(ticker: string, bars: WeeklyBar[]): ScanResult {
   const meta = getMetaForTicker(ticker);
   const sector = meta?.sector ?? "?";
-  const tier = meta?.tier ?? 2;
+  const tier   = meta?.tier ?? 2;
 
-  const base: Omit<ScanResult, "signalLevel" | "signalDate" | "weeksActive" | "ao" | "ac" | "acColor"> = {
+  const base: Omit<ScanResult, "signalLevel" | "signalDate" | "weeksActive" | "ao" | "ac" | "acColor" | "nearLows" | "ranging" | "pricePercentile"> = {
     ticker,
     sector,
     tier,
-    hrHistorical: meta?.hrHistorical,
+    hrHistorical:    meta?.hrHistorical,
     avgRetHistorical: meta?.avgRetHistorical,
     maxDdHistorical: meta?.maxDdHistorical,
     aoLagHistorical: meta?.aoLagHistorical,
   };
 
+  const ctx = bars.length >= RANGE_CHECK_WEEKS
+    ? priceContext(bars)
+    : { nearLows: false, ranging: false, pricePercentile: 50 };
+
   if (bars.length < 40) {
-    return { ...base, signalLevel: "none", signalDate: null, weeksActive: 0, ao: 0, ac: 0, acColor: "?" };
+    return { ...base, signalLevel: "none", signalDate: null, weeksActive: 0, ao: 0, ac: 0, acColor: "?", ...ctx };
   }
 
   const indicatorBars = calculateIndicators(bars.map((b) => ({
@@ -72,69 +99,58 @@ export function scanTicker(ticker: string, bars: WeeklyBar[]): ScanResult {
   })));
 
   if (indicatorBars.length < 2) {
-    return { ...base, signalLevel: "none", signalDate: null, weeksActive: 0, ao: 0, ac: 0, acColor: "?" };
+    return { ...base, signalLevel: "none", signalDate: null, weeksActive: 0, ao: 0, ac: 0, acColor: "?", ...ctx };
   }
 
-  const lastBar = indicatorBars[indicatorBars.length - 1];
-  const { ao, ac, acColor } = lastBar;
+  const last = indicatorBars[indicatorBars.length - 1];
+  const prev = indicatorBars[indicatorBars.length - 2];
+  const { ao, ac, acColor, date } = last;
 
-  // Check S2 (higher priority — show if active in last N weeks)
-  const s2signals = detectSignalsS2(ticker, indicatorBars);
-  if (s2signals.length > 0) {
-    const lastS2 = s2signals[s2signals.length - 1];
-    const weeksActive = indicatorBars.length - 1 - lastS2.signalIndex;
-    if (weeksActive <= SIGNAL_LOOKBACK_WEEKS) {
-      return {
-        ...base,
-        signalLevel: "S2",
-        signalDate: lastS2.date,
-        weeksActive,
-        ao,
-        ac,
-        acColor,
-        aoRecovery: lastS2.aoRecovery,
-        aoBottomDepth: lastS2.aoBottomDepth,
-      };
-    }
+  // ── S2: AC crossed zero THIS week, AO still negative ──────────────────────
+  if (prev.ac < 0 && ac >= 0 && ao < 0) {
+    return {
+      ...base,
+      signalLevel: "S2",
+      signalDate: date,
+      weeksActive: 0,
+      ao, ac, acColor,
+      ...ctx,
+    };
   }
 
-  // Check S1
-  const s1signals = detectSignals(ticker, indicatorBars);
-  if (s1signals.length > 0) {
-    const lastS1 = s1signals[s1signals.length - 1];
-    const weeksActive = indicatorBars.length - 1 - lastS1.signalIndex;
-    if (weeksActive <= SIGNAL_LOOKBACK_WEEKS) {
-      return {
-        ...base,
-        signalLevel: "S1",
-        signalDate: lastS1.date,
-        weeksActive,
-        ao,
-        ac,
-        acColor,
-      };
-    }
+  // ── S1: AC turned green THIS week (still negative), AO still negative ─────
+  if (ao < 0 && ac < 0 && acColor === "green" && prev.acColor === "red") {
+    return {
+      ...base,
+      signalLevel: "S1",
+      signalDate: date,
+      weeksActive: 0,
+      ao, ac, acColor,
+      ...ctx,
+    };
   }
 
-  return { ...base, signalLevel: "none", signalDate: null, weeksActive: 0, ao, ac, acColor };
+  return { ...base, signalLevel: "none", signalDate: null, weeksActive: 0, ao, ac, acColor, ...ctx };
 }
 
 export function runScan(tickerBars: Map<string, WeeklyBar[]>): ScanResult[] {
   const results: ScanResult[] = [];
 
   for (const [ticker, bars] of tickerBars) {
-    if (ticker === "SPY") continue; // macro reference, not scanned
+    if (ticker === "SPY") continue;
     const result = scanTicker(ticker, bars);
     results.push(result);
   }
 
   // Sort: S2 first, then S1, then none
-  // Within same level: Tier 1 first, then by HR historical desc
+  // Within same level: nearLows first, then Tier 1, then HR desc
   results.sort((a, b) => {
     const levelOrder: Record<SignalLevel, number> = { S2: 0, S1: 1, none: 2 };
     if (levelOrder[a.signalLevel] !== levelOrder[b.signalLevel]) {
       return levelOrder[a.signalLevel] - levelOrder[b.signalLevel];
     }
+    // nearLows floats up
+    if (a.nearLows !== b.nearLows) return a.nearLows ? -1 : 1;
     if (a.tier !== b.tier) return a.tier - b.tier;
     return (b.hrHistorical ?? 0) - (a.hrHistorical ?? 0);
   });
