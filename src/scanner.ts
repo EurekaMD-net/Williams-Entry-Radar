@@ -106,8 +106,9 @@ export function scanTicker(ticker: string, bars: WeeklyBar[]): ScanResult {
   const prev = indicatorBars[indicatorBars.length - 2];
   const { ao, ac, acColor, date } = last;
 
-  // ── S2: AC crossed zero THIS week, AO still negative ──────────────────────
-  if (prev.ac < 0 && ac >= 0 && ao < 0) {
+  // ── S2: AC crossed zero THIS week (prev<0 → curr>=0), AO still negative ───
+  // Ranging tickers are excluded — lateral price action makes the cross noise, not signal.
+  if (prev.ac < 0 && ac >= 0 && ao < 0 && !ctx.ranging) {
     return {
       ...base,
       signalLevel: "S2",
@@ -118,8 +119,11 @@ export function scanTicker(ticker: string, bars: WeeklyBar[]): ScanResult {
     };
   }
 
-  // ── S1: AC turned green THIS week (still negative), AO still negative ─────
-  if (ao < 0 && ac < 0 && acColor === "green" && prev.acColor === "red") {
+  // ── S1: AC is green THIS week (AC[t] > AC[t-1]), both AO and AC negative ──
+  // "Green" = AC rising vs prior week — regardless of how many weeks it has been green.
+  // This captures the full duration of the S1 observation window, not just the first flip.
+  // Ranging tickers excluded — oscillator moves within a band are not momentum.
+  if (ao < 0 && ac < 0 && ac > prev.ac && !ctx.ranging) {
     return {
       ...base,
       signalLevel: "S1",
