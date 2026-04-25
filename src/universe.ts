@@ -213,6 +213,76 @@ const TIER2_XLY: TickerMeta[] = [
   { ticker: "MAR",  sector: "XLY", tier: 2 },
 ];
 
+// --- NEW SECTORS batch 2 (added 2026-04-25) ---
+const TIER2_XLK: TickerMeta[] = [
+  { ticker: "NVDA",  sector: "XLK", tier: 2 },
+  { ticker: "AAPL",  sector: "XLK", tier: 2 },
+  { ticker: "MSFT",  sector: "XLK", tier: 2 },
+  { ticker: "AVGO",  sector: "XLK", tier: 2 },
+  { ticker: "MU",    sector: "XLK", tier: 2 },
+  { ticker: "AMD",   sector: "XLK", tier: 2 },
+  { ticker: "CSCO",  sector: "XLK", tier: 2 },
+  { ticker: "PLTR",  sector: "XLK", tier: 2 },
+  { ticker: "LRCX",  sector: "XLK", tier: 2 },
+  { ticker: "AMAT",  sector: "XLK", tier: 2 },
+  { ticker: "INTC",  sector: "XLK", tier: 2 },
+  { ticker: "ORCL",  sector: "XLK", tier: 2 },
+  { ticker: "TXN",   sector: "XLK", tier: 2 },
+  { ticker: "KLAC",  sector: "XLK", tier: 2 },
+  { ticker: "IBM",   sector: "XLK", tier: 2 },
+  { ticker: "ADI",   sector: "XLK", tier: 2 },
+  { ticker: "APH",   sector: "XLK", tier: 2 },
+  { ticker: "ANET",  sector: "XLK", tier: 2 },
+  { ticker: "CRM",   sector: "XLK", tier: 2 },
+  { ticker: "QCOM",  sector: "XLK", tier: 2 },
+];
+
+const TIER2_XLC: TickerMeta[] = [
+  { ticker: "META",  sector: "XLC", tier: 2 },
+  { ticker: "GOOGL", sector: "XLC", tier: 2 },
+  { ticker: "GOOG",  sector: "XLC", tier: 2 },
+  { ticker: "DIS",   sector: "XLC", tier: 2 },
+  { ticker: "CMCSA", sector: "XLC", tier: 2 },
+  { ticker: "CHTR",  sector: "XLC", tier: 2 },
+  { ticker: "TTWO",  sector: "XLC", tier: 2 },
+  { ticker: "SATS",  sector: "XLC", tier: 2 },
+  { ticker: "LYV",   sector: "XLC", tier: 2 },
+  { ticker: "OMC",   sector: "XLC", tier: 2 },
+  { ticker: "EA",    sector: "XLC", tier: 2 },
+  { ticker: "NFLX",  sector: "XLC", tier: 2 },
+  { ticker: "WBD",   sector: "XLC", tier: 2 },
+  { ticker: "VZ",    sector: "XLC", tier: 2 },
+  { ticker: "T",     sector: "XLC", tier: 2 },
+  { ticker: "TMUS",  sector: "XLC", tier: 2 },
+  { ticker: "TKO",   sector: "XLC", tier: 2 },
+  { ticker: "FOXA",  sector: "XLC", tier: 2 },
+  { ticker: "TTD",   sector: "XLC", tier: 2 },
+  { ticker: "NWSA",  sector: "XLC", tier: 2 },
+];
+
+const TIER2_XLRE: TickerMeta[] = [
+  { ticker: "WELL",  sector: "XLRE", tier: 2 },
+  { ticker: "PLD",   sector: "XLRE", tier: 2 },
+  { ticker: "EQIX",  sector: "XLRE", tier: 2 },
+  { ticker: "AMT",   sector: "XLRE", tier: 2 },
+  { ticker: "DLR",   sector: "XLRE", tier: 2 },
+  { ticker: "SPG",   sector: "XLRE", tier: 2 },
+  { ticker: "CBRE",  sector: "XLRE", tier: 2 },
+  { ticker: "PSA",   sector: "XLRE", tier: 2 },
+  { ticker: "O",     sector: "XLRE", tier: 2 },
+  { ticker: "VTR",   sector: "XLRE", tier: 2 },
+  { ticker: "CCI",   sector: "XLRE", tier: 2 },
+  { ticker: "IRM",   sector: "XLRE", tier: 2 },
+  { ticker: "VICI",  sector: "XLRE", tier: 2 },
+  { ticker: "EXR",   sector: "XLRE", tier: 2 },
+  { ticker: "AVB",   sector: "XLRE", tier: 2 },
+  { ticker: "SBAC",  sector: "XLRE", tier: 2 },
+  { ticker: "EQR",   sector: "XLRE", tier: 2 },
+  { ticker: "WY",    sector: "XLRE", tier: 2 },
+  { ticker: "ESS",   sector: "XLRE", tier: 2 },
+  { ticker: "KIM",   sector: "XLRE", tier: 2 },
+];
+
 export const UNIVERSE: TickerMeta[] = [
   ...TIER1,
   ...TIER2_XLU,
@@ -223,6 +293,9 @@ export const UNIVERSE: TickerMeta[] = [
   ...TIER2_XLV,
   ...TIER2_XLB,
   ...TIER2_XLY,
+  ...TIER2_XLK,
+  ...TIER2_XLC,
+  ...TIER2_XLRE,
 ];
 
 // Expansion schedule: add these weekly, in order, starting week 2
