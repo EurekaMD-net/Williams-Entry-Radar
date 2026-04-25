@@ -283,6 +283,51 @@ const TIER2_XLRE: TickerMeta[] = [
   { ticker: "KIM",   sector: "XLRE", tier: 2 },
 ];
 
+const TIER2_IBB: TickerMeta[] = [
+  { ticker: "AMGN",  sector: "IBB", tier: 2 },
+  { ticker: "GILD",  sector: "IBB", tier: 2 },
+  { ticker: "VRTX",  sector: "IBB", tier: 2 },
+  { ticker: "REGN",  sector: "IBB", tier: 2 },
+  { ticker: "ALNY",  sector: "IBB", tier: 2 },
+  { ticker: "ARGX",  sector: "IBB", tier: 2 },
+  { ticker: "INSM",  sector: "IBB", tier: 2 },
+  { ticker: "BIIB",  sector: "IBB", tier: 2 },
+  { ticker: "NTRA",  sector: "IBB", tier: 2 },
+  { ticker: "UTHR",  sector: "IBB", tier: 2 },
+  { ticker: "RVMD",  sector: "IBB", tier: 2 },
+  { ticker: "ONC",   sector: "IBB", tier: 2 },
+  { ticker: "MRNA",  sector: "IBB", tier: 2 },
+  { ticker: "INCY",  sector: "IBB", tier: 2 },
+  { ticker: "ILMN",  sector: "IBB", tier: 2 },
+  { ticker: "ROIV",  sector: "IBB", tier: 2 },
+  { ticker: "GMAB",  sector: "IBB", tier: 2 },
+  { ticker: "NBIX",  sector: "IBB", tier: 2 },
+  { ticker: "IONS",  sector: "IBB", tier: 2 },
+  { ticker: "BBIO",  sector: "IBB", tier: 2 },
+];
+
+const TIER2_XBI: TickerMeta[] = [
+  { ticker: "APLS",  sector: "XBI", tier: 2 },
+  { ticker: "TVTX",  sector: "XBI", tier: 2 },
+  { ticker: "TGTX",  sector: "XBI", tier: 2 },
+  { ticker: "ARWR",  sector: "XBI", tier: 2 },
+  { ticker: "SMMT",  sector: "XBI", tier: 2 },
+  { ticker: "TWST",  sector: "XBI", tier: 2 },
+  { ticker: "ERAS",  sector: "XBI", tier: 2 },
+  { ticker: "ALKS",  sector: "XBI", tier: 2 },
+  { ticker: "MDGL",  sector: "XBI", tier: 2 },
+  { ticker: "APGE",  sector: "XBI", tier: 2 },
+  { ticker: "BEAM",  sector: "XBI", tier: 2 },
+  { ticker: "PRAX",  sector: "XBI", tier: 2 },
+  { ticker: "CRSP",  sector: "XBI", tier: 2 },
+  { ticker: "EXEL",  sector: "XBI", tier: 2 },
+  { ticker: "SRRK",  sector: "XBI", tier: 2 },
+  { ticker: "NUVL",  sector: "XBI", tier: 2 },
+  { ticker: "KYMR",  sector: "XBI", tier: 2 },
+  { ticker: "PTGX",  sector: "XBI", tier: 2 },
+  { ticker: "PCVX",  sector: "XBI", tier: 2 },
+];
+
 export const UNIVERSE: TickerMeta[] = [
   ...TIER1,
   ...TIER2_XLU,
@@ -296,6 +341,8 @@ export const UNIVERSE: TickerMeta[] = [
   ...TIER2_XLK,
   ...TIER2_XLC,
   ...TIER2_XLRE,
+  ...TIER2_IBB,
+  ...TIER2_XBI,
 ];
 
 // Expansion schedule: add these weekly, in order, starting week 2
