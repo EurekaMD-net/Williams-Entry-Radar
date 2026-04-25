@@ -33,7 +33,31 @@ export const SECTOR_COMPONENTS: Record<string, { tickers: string[]; name: string
       "GE", "CAT", "HON", "UNP", "RTX", "LMT", "DE", "UPS", "ETN", "BA",
       "GEV", "WM", "PH", "FDX", "CTAS", "EMR", "NSC", "ITW", "MMM", "TT"
     ]
-  }
+  },
+  XLF: {
+    name: "Financials",
+    tickers: [
+      "JPM", "BAC", "WFC", "GS", "MS", "BLK", "AXP", "COF", "USB", "TFC", "PNC", "SCHW", "CB", "MET", "PRU", "AIG", "AFL", "ALL", "ICE", "CME"
+    ]
+  },
+  XLV: {
+    name: "Healthcare",
+    tickers: [
+      "JNJ", "UNH", "LLY", "ABBV", "MRK", "BMY", "PFE", "AMGN", "GILD", "CVS", "CI", "HUM", "ELV", "MDT", "ABT", "SYK", "BSX", "ZTS", "ISRG", "BDX"
+    ]
+  },
+  XLB: {
+    name: "Materials",
+    tickers: [
+      "LIN", "APD", "SHW", "ECL", "FCX", "NEM", "NUE", "VMC", "MLM", "DOW", "LYB", "EMN", "PPG", "ALB", "IFF", "CF", "MOS", "STLD", "RS", "RPM"
+    ]
+  },
+  XLY: {
+    name: "Cons.Disc",
+    tickers: [
+      "AMZN", "TSLA", "HD", "MCD", "NKE", "LOW", "SBUX", "TJX", "BKNG", "GM", "F", "ORLY", "AZO", "ROST", "YUM", "DHI", "LEN", "PHM", "DRI", "MAR"
+    ]
+  },
 };
 
 // Also include SPY as macro filter (S&P 500 proxy)
