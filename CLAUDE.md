@@ -12,9 +12,9 @@ To populate weekly OHLC bars for the universe (e.g. after a universe-expansion P
 ./scripts/fetch.sh
 ```
 
-The wrapper sources `/etc/williams-radar.env` (where `AV_API_KEY` lives, mode 600), then runs `npx tsx src/fetch-tickers.ts`. Cache-first — already-fetched tickers are served from SQLite without an API call. 1.1s inter-call throttle keeps us under the AV premium 75 req/min budget. Exits non-zero if any ticker errored.
+**Always use `./scripts/fetch.sh`. Never call `npx tsx src/fetch-tickers.ts` directly.** The wrapper is not optional — it sources `/etc/williams-radar.env` to set `AV_API_KEY` (mode 600). The mc systemd environment exposes the same secret under a different name (`ALPHAVANTAGE_API_KEY`), so `npx tsx src/fetch-tickers.ts` invoked from inside Jarvis will throw `AV_API_KEY environment variable is required`. Symptom is a silent zero-bars result that does not surface until a scan runs against an empty cache. The wrapper also pins the 1.1s inter-call throttle (Premium 75 req/min ceiling, ~28% headroom) and exits non-zero on any ticker error.
 
-You should not need to edit `fetcher.ts`, `cache.ts`, `db.ts`, `scheduler.ts`, or any other signal-pipeline file to make this work. If `fetch.sh` fails, **stop and report** — do not "fix" by editing pipeline code.
+You should not need to edit `fetcher.ts`, `cache.ts`, `db.ts`, `scheduler.ts`, or any other signal-pipeline file to make this work. If `fetch.sh` fails, **stop and report** — do not "fix" by editing pipeline code, and do not "work around it" by invoking the underlying TS entry point directly.
 
 ## Scope of authorized changes
 
