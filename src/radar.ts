@@ -74,7 +74,7 @@ async function main(): Promise<void> {
     if (r) {
       console.log(`\n  Signal: ${r.signalLevel}  |  Weeks active: ${r.weeksActive}  |  Signal date: ${r.signalDate ?? "—"}`);
       if (r.signalLevel === "S2") {
-        console.log(`  AO recovery: ${r.aoRecovery?.toFixed(4)}  |  AO bottom depth: ${r.aoBottomDepth}W`);
+        console.log(`  Near lows: ${r.nearLows} (p${r.pricePercentile}%)  |  Ranging: ${r.ranging}`);
       }
     }
     return;
