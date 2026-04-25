@@ -4,6 +4,18 @@
 
 **This repo's signal logic is FROZEN.** The S2/S2D/S1 scanner, ranging filter, AO threshold, CSV signalQuality output, scheduler delivery cascade, and Pin Scanner rules were validated and pinned in commits `8d3ebd5`..`2edce1b` (anchor tag: `pre-jarvis-universe-2026-04-25`). The radar works. Do not improve, refactor, "clean up", or reorganize any of this. Any signal-logic regression — even one that "looks like a fix" — costs us live trading signal.
 
+## Authorized tooling
+
+To populate weekly OHLC bars for the universe (e.g. after a universe-expansion PR merges, before the next scheduled scan), invoke the operator-sanctioned wrapper:
+
+```
+./scripts/fetch.sh
+```
+
+The wrapper sources `/etc/williams-radar.env` (where `AV_API_KEY` lives, mode 600), then runs `npx tsx src/fetch-tickers.ts`. Cache-first — already-fetched tickers are served from SQLite without an API call. 1.1s inter-call throttle keeps us under the AV premium 75 req/min budget. Exits non-zero if any ticker errored.
+
+You should not need to edit `fetcher.ts`, `cache.ts`, `db.ts`, `scheduler.ts`, or any other signal-pipeline file to make this work. If `fetch.sh` fails, **stop and report** — do not "fix" by editing pipeline code.
+
 ## Scope of authorized changes
 
 When working in this repo, only modify the **ticker universe**:
@@ -16,6 +28,8 @@ Everything else is **off limits** without explicit operator approval per change:
 
 - ❌ `src/scanner.ts`, `src/signals/*`, `src/ranging.ts`, `src/ao.ts`, any signal calculation
 - ❌ `src/scheduler.ts`, delivery cascade code
+- ❌ `src/fetch-tickers.ts`, `scripts/fetch.sh` — operator-sanctioned tooling, not autonomous-edit territory
+- ❌ `src/fetcher.ts`, `src/cache.ts`, `src/db.ts` — data plumbing under signal frozen freeze
 - ❌ Database schema, migrations, OHLC table structure
 - ❌ Backtest harness, evaluation pipeline
 - ❌ Pin Scanner rules
