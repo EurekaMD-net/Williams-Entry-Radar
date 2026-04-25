@@ -9,31 +9,27 @@
 import fs from "fs";
 import path from "path";
 import type { ScanResult } from "./scanner.js";
+import { getWeekLabel as getWeekLabelTz } from "./time.js";
+import { csvRow } from "./csv.js";
 
 const RESULTS_DIR =
   process.env.RADAR_RESULTS_DIR ??
   new URL("../results", import.meta.url).pathname;
 
 function ensureResultsDir(): void {
-  if (!fs.existsSync(RESULTS_DIR)) fs.mkdirSync(RESULTS_DIR, { recursive: true });
+  if (!fs.existsSync(RESULTS_DIR))
+    fs.mkdirSync(RESULTS_DIR, { recursive: true });
 }
 
+/**
+ * ISO-8601 week label in America/Mexico_City. Re-exported from `./time.js`
+ * which uses Intl.DateTimeFormat for explicit-TZ computation. Inlining
+ * Date.setDate/getDay math here would be local-machine-TZ dependent — works
+ * by accident today because the systemd unit sets TZ=America/Mexico_City,
+ * but the explicit-TZ choice is the design.
+ */
 export function getWeekLabel(): string {
-  const now = new Date();
-  const tmp = new Date(now.getTime());
-  tmp.setHours(0, 0, 0, 0);
-  tmp.setDate(tmp.getDate() + 3 - ((tmp.getDay() + 6) % 7));
-  const week1 = new Date(tmp.getFullYear(), 0, 4);
-  const weekNum =
-    1 +
-    Math.round(
-      ((tmp.getTime() - week1.getTime()) / 86400000 -
-        3 +
-        ((week1.getDay() + 6) % 7)) /
-        7
-    );
-  const year = tmp.getFullYear();
-  return `${year}-W${String(weekNum).padStart(2, "0")}`;
+  return getWeekLabelTz();
 }
 
 function fmt(n: number | undefined, decimals = 1, suffix = ""): string {
@@ -50,15 +46,15 @@ function padLeft(s: string, n: number): string {
 
 function priceFlags(r: ScanResult): string {
   const flags: string[] = [];
-  if (r.nearLows)  flags.push(`*MINIMOS(p${r.pricePercentile}%)`);
-  if (r.ranging)   flags.push("!RANGO");
+  if (r.nearLows) flags.push(`*MINIMOS(p${r.pricePercentile}%)`);
+  if (r.ranging) flags.push("!RANGO");
   return flags.length ? "  " + flags.join(" ") : "";
 }
 
 export function printReport(results: ScanResult[], runDate: string): void {
-  const s2   = results.filter((r) => r.signalLevel === "S2");
-  const s2d  = results.filter((r) => r.signalLevel === "S2D");
-  const s1   = results.filter((r) => r.signalLevel === "S1");
+  const s2 = results.filter((r) => r.signalLevel === "S2");
+  const s2d = results.filter((r) => r.signalLevel === "S2D");
+  const s1 = results.filter((r) => r.signalLevel === "S1");
   const none = results.filter((r) => r.signalLevel === "none");
 
   console.log("\n" + "=".repeat(110));
@@ -70,10 +66,10 @@ export function printReport(results: ScanResult[], runDate: string): void {
       padRight("Ticker", 7),
       padRight("Sector", 6),
       "T",
-      padLeft("HR%",  5),
-      padLeft("AO",   8),
-      padLeft("AC",   8),
-      padLeft("Pct",  5),
+      padLeft("HR%", 5),
+      padLeft("AO", 8),
+      padLeft("AC", 8),
+      padLeft("Pct", 5),
       padLeft("ExpLag", 7),
       "  Contexto",
     ].join("  ");
@@ -98,7 +94,9 @@ export function printReport(results: ScanResult[], runDate: string): void {
 
   // ── S2 PURA — ATENCIÓN ────────────────────────────────────────────
   if (s2.length > 0) {
-    console.log("\n  >> S2 PURA — ATENCION (AC cruzo el cero ESTA semana, AO negativo Y rojo)\n");
+    console.log(
+      "\n  >> S2 PURA — ATENCION (AC cruzo el cero ESTA semana, AO negativo Y rojo)\n",
+    );
     signalTableHeader();
     for (const r of s2) signalRow(r);
   } else {
@@ -107,7 +105,9 @@ export function printReport(results: ScanResult[], runDate: string): void {
 
   // ── S2 DEGRADADA — POTENCIAL ──────────────────────────────────────
   if (s2d.length > 0) {
-    console.log("\n  ~~ S2 DEGRADADA — POTENCIAL (AC cruzo el cero, pero AO ya iba verde = movimiento adelantado)\n");
+    console.log(
+      "\n  ~~ S2 DEGRADADA — POTENCIAL (AC cruzo el cero, pero AO ya iba verde = movimiento adelantado)\n",
+    );
     signalTableHeader();
     for (const r of s2d) signalRow(r);
   } else {
@@ -116,7 +116,9 @@ export function printReport(results: ScanResult[], runDate: string): void {
 
   // ── S1 — OBSERVACIÓN ──────────────────────────────────────────────
   if (s1.length > 0) {
-    console.log("\n  >  S1 — OBSERVACION (AC verde ESTA semana, AO y AC negativos)\n");
+    console.log(
+      "\n  >  S1 — OBSERVACION (AC verde ESTA semana, AO y AC negativos)\n",
+    );
     signalTableHeader();
     for (const r of s1) signalRow(r);
   } else {
@@ -124,11 +126,13 @@ export function printReport(results: ScanResult[], runDate: string): void {
   }
 
   // ── RESUMEN ───────────────────────────────────────────────────────
-  const s2NearLows  = s2.filter((r) => r.nearLows).length;
+  const s2NearLows = s2.filter((r) => r.nearLows).length;
   const s2dNearLows = s2d.filter((r) => r.nearLows).length;
-  const s1NearLows  = s1.filter((r) => r.nearLows).length;
+  const s1NearLows = s1.filter((r) => r.nearLows).length;
   console.log("\n" + "-".repeat(110));
-  console.log(`  RESUMEN: ${results.length} tickers  |  S2: ${s2.length} (${s2NearLows} en minimos)  |  S2D: ${s2d.length} (${s2dNearLows} en minimos)  |  S1: ${s1.length} (${s1NearLows} en minimos)  |  Sin senal: ${none.length}`);
+  console.log(
+    `  RESUMEN: ${results.length} tickers  |  S2: ${s2.length} (${s2NearLows} en minimos)  |  S2D: ${s2d.length} (${s2dNearLows} en minimos)  |  S1: ${s1.length} (${s1NearLows} en minimos)  |  Sin senal: ${none.length}`,
+  );
   console.log("=".repeat(110) + "\n");
 }
 
@@ -139,19 +143,51 @@ export function saveCSV(results: ScanResult[], runDate: string): string {
   const filepath = path.join(RESULTS_DIR, filename);
 
   const headers = [
-    "ticker", "sector", "tier", "signalLevel", "signalQuality", "signalDate", "weeksActive",
-    "ao", "ac", "acColor", "hrHistorical", "avgRetHistorical",
-    "maxDdHistorical", "aoLagHistorical", "nearLows", "ranging", "pricePercentile",
+    "ticker",
+    "sector",
+    "tier",
+    "signalLevel",
+    "signalQuality",
+    "signalDate",
+    "weeksActive",
+    "ao",
+    "ac",
+    "acColor",
+    "hrHistorical",
+    "avgRetHistorical",
+    "maxDdHistorical",
+    "aoLagHistorical",
+    "nearLows",
+    "ranging",
+    "pricePercentile",
   ];
 
   const rows = results.map((r) => [
-    r.ticker, r.sector, r.tier, r.signalLevel, r.signalQuality, r.signalDate ?? "",
-    r.weeksActive, r.ao.toFixed(4), r.ac.toFixed(4), r.acColor,
-    r.hrHistorical ?? "", r.avgRetHistorical ?? "", r.maxDdHistorical ?? "",
-    r.aoLagHistorical ?? "", r.nearLows, r.ranging, r.pricePercentile,
+    r.ticker,
+    r.sector,
+    r.tier,
+    r.signalLevel,
+    r.signalQuality,
+    r.signalDate ?? "",
+    r.weeksActive,
+    r.ao.toFixed(4),
+    r.ac.toFixed(4),
+    r.acColor,
+    r.hrHistorical ?? "",
+    r.avgRetHistorical ?? "",
+    r.maxDdHistorical ?? "",
+    r.aoLagHistorical ?? "",
+    r.nearLows,
+    r.ranging,
+    r.pricePercentile,
   ]);
 
-  const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+  // csvRow handles comma/quote/newline escaping per RFC 4180. Today every
+  // ScanResult field is comma-safe (numbers, tickers, sector codes, ISO
+  // dates, booleans), but routing through the helper means a future free-
+  // text column (e.g. signal notes, news headlines) won't silently corrupt
+  // the CSV.
+  const csv = [csvRow(headers), ...rows.map(csvRow)].join("\n");
   fs.writeFileSync(filepath, csv, "utf-8");
   return filepath;
 }

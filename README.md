@@ -10,18 +10,24 @@ When **both AO and AC are negative** and AC flips from **red → green after rea
 ALERT CONDITION (S1 — Observation):
   AO  < 0  (negative, bearish territory)
   AC  < 0  (negative, bearish territory)
-  AC[prev] < AC[curr]  (AC hit bottom and is turning)
-  AC color: red → green  (first green after red series)
+  AC[t] > AC[t-1]  (AC rose this week — green)
 
 CONFIRMATION (S2 — Attention):
-  AC crosses zero (from negative to positive)
-  AO < 0 but recovering from its cycle bottom
-  AO[t] > AO[t-N] for N in 2..5 weeks
-  AO touched its bottom within the last 16 weeks
+  prev.AC < 0 AND AC >= 0  (AC crossed zero this week)
+  AO < 0
+  Quality split:
+    PURE     — AO[t] < AO[t-1]  (AO still falling/red — clean entry)
+    DEGRADED — AO[t] >= AO[t-1] (AO already recovering — late confirmation)
+
+EXCLUSIONS (apply to all levels):
+  ranging   — 12-week price range / avg < 15% → lateral, low conviction
+  AO >= 0   — every signal requires a negative AO
 
 HIERARCHY:
   AC signals first → AO confirms weeks later → Price follows.
-  S1 = start watching. S2 = consider acting.
+  S1  = start watching.
+  S2D = a move is underway, but price already moved.
+  S2  = consider acting (clean entry, both oscillators agree the move hasn't begun).
 ```
 
 **Key insight from backtesting:** In individual tickers, AO lag averages 10-18 weeks after S1. You have 2-4 months of observation before AO confirms. Patience is part of the system.
@@ -150,8 +156,8 @@ detect S1 + S2 (signals.ts / signals-s2.ts)
   ↓
 weekly report (console + CSV in results/)
   ↓
-[if S2] xpoz enrichment (POST localhost:8086/search/keyword — wrapped: failures
-  cannot block downstream delivery)
+[if S2 or S2D] xpoz enrichment (POST localhost:8086/search/keyword — wrapped:
+  failures cannot block downstream delivery)
   ↓
 push to GitHub (wrapped — failures cannot block Telegram)
   ↓

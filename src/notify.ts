@@ -39,33 +39,49 @@ export function buildTelegramMessage(
   xpozLines: string[] = [],
 ): string {
   const s2 = results.filter((r) => r.signalLevel === "S2");
+  const s2d = results.filter((r) => r.signalLevel === "S2D");
   const s1 = results.filter((r) => r.signalLevel === "S1");
 
   const lines: string[] = [];
 
   lines.push(`📡 *Williams Entry Radar — ${weekLabel}*`);
   lines.push(
-    `Escaneados: ${results.length} | S2: ${s2.length} | S1: ${s1.length}`,
+    `Escaneados: ${results.length} | S2: ${s2.length} | S2D: ${s2d.length} | S1: ${s1.length}`,
   );
   lines.push("");
 
-  // S2 — ATENCIÓN
+  // S2 PURA — ATENCIÓN (clean entry: AC crossed zero this week, AO still red)
   if (s2.length > 0) {
-    lines.push("▶▶ *NIVEL 2 — ATENCIÓN (S2)*");
+    lines.push("▶▶ *S2 PURA — ATENCIÓN (entrada limpia)*");
     for (const r of s2) {
       const hr = r.hrHistorical ? `${fmt(r.hrHistorical)}%` : "—";
       lines.push(
-        `  \`${r.ticker}\` ${r.sector} T${r.tier} | HR:${hr} | AO:${fmt(r.ao, 3)} | AC:${fmt(r.ac, 3)} | ${r.weeksActive}w desde ${r.signalDate ?? "?"}`,
+        `  \`${r.ticker}\` ${r.sector} T${r.tier} | HR:${hr} | AO:${fmt(r.ao, 3)} | AC:${fmt(r.ac, 3)} | p${r.pricePercentile}%`,
       );
     }
-    // Xpoz enrichment (if any)
+    // Xpoz enrichment (if any) — applies to S2 + S2D pool
     if (xpozLines.length > 0) {
       lines.push("");
       lines.push("🔎 *Confluencia Reddit (Xpoz)*");
       for (const l of xpozLines) lines.push(`  ${l}`);
     }
   } else {
-    lines.push("▶▶ *NIVEL 2 — ATENCIÓN (S2):* Sin señales activas");
+    lines.push("▶▶ *S2 PURA — ATENCIÓN:* Sin señales esta semana");
+  }
+
+  lines.push("");
+
+  // S2 DEGRADADA — POTENTIAL (AC crossed but AO already recovering)
+  if (s2d.length > 0) {
+    lines.push("〰 *S2 DEGRADADA — POTENCIAL (movimiento adelantado)*");
+    for (const r of s2d) {
+      const hr = r.hrHistorical ? `${fmt(r.hrHistorical)}%` : "—";
+      lines.push(
+        `  \`${r.ticker}\` ${r.sector} T${r.tier} | HR:${hr} | AO:${fmt(r.ao, 3)} | AC:${fmt(r.ac, 3)} | p${r.pricePercentile}%`,
+      );
+    }
+  } else {
+    lines.push("〰 *S2 DEGRADADA:* ninguna");
   }
 
   lines.push("");
@@ -79,7 +95,7 @@ export function buildTelegramMessage(
     for (const r of top) {
       const hr = r.hrHistorical ? `${fmt(r.hrHistorical)}%` : "—";
       lines.push(
-        `  \`${r.ticker}\` ${r.sector} T${r.tier} | HR:${hr} | AC:${r.acColor} | ${r.weeksActive}w`,
+        `  \`${r.ticker}\` ${r.sector} T${r.tier} | HR:${hr} | AC:${r.acColor} | p${r.pricePercentile}%`,
       );
     }
   } else {

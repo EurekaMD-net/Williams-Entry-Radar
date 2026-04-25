@@ -107,22 +107,23 @@ function buildSignalsSummary(
   xpozLines: string[],
 ): string {
   const s2 = results.filter((r) => r.signalLevel === "S2");
+  const s2d = results.filter((r) => r.signalLevel === "S2D");
   const s1 = results.filter((r) => r.signalLevel === "S1");
   const lines: string[] = [];
 
   lines.push(`**Run:** ${new Date().toISOString()}`);
   lines.push(
-    `**Escaneados:** ${results.length} | **S2:** ${s2.length} | **S1:** ${s1.length}`,
+    `**Escaneados:** ${results.length} | **S2:** ${s2.length} | **S2D:** ${s2d.length} | **S1:** ${s1.length}`,
   );
   lines.push("");
 
   if (s2.length > 0) {
-    lines.push("### NIVEL 2 — ATENCIÓN (S2)");
-    lines.push("| Ticker | Sector | T | HR% | AO | AC | Wks | Señal |");
-    lines.push("|--------|--------|---|-----|-----|-----|-----|-------|");
+    lines.push("### S2 PURA — ATENCIÓN (entrada limpia)");
+    lines.push("| Ticker | Sector | T | HR% | AO | AC | Price% | Señal |");
+    lines.push("|--------|--------|---|-----|-----|-----|--------|-------|");
     for (const r of s2) {
       lines.push(
-        `| ${r.ticker} | ${r.sector} | ${r.tier} | ${r.hrHistorical?.toFixed(1) ?? "—"}% | ${r.ao.toFixed(3)} | ${r.ac.toFixed(3)} | ${r.weeksActive} | ${r.signalDate ?? "?"} |`,
+        `| ${r.ticker} | ${r.sector} | ${r.tier} | ${r.hrHistorical?.toFixed(1) ?? "—"}% | ${r.ao.toFixed(3)} | ${r.ac.toFixed(3)} | ${r.pricePercentile}% | ${r.signalDate ?? "?"} |`,
       );
     }
     if (xpozLines.length > 0) {
@@ -133,13 +134,25 @@ function buildSignalsSummary(
     lines.push("");
   }
 
+  if (s2d.length > 0) {
+    lines.push("### S2 DEGRADADA — POTENCIAL (movimiento adelantado)");
+    lines.push("| Ticker | Sector | T | HR% | AO | AC | Price% | Señal |");
+    lines.push("|--------|--------|---|-----|-----|-----|--------|-------|");
+    for (const r of s2d) {
+      lines.push(
+        `| ${r.ticker} | ${r.sector} | ${r.tier} | ${r.hrHistorical?.toFixed(1) ?? "—"}% | ${r.ao.toFixed(3)} | ${r.ac.toFixed(3)} | ${r.pricePercentile}% | ${r.signalDate ?? "?"} |`,
+      );
+    }
+    lines.push("");
+  }
+
   if (s1.length > 0) {
     lines.push("### NIVEL 1 — OBSERVACIÓN (S1)");
-    lines.push("| Ticker | Sector | T | HR% | Wks | Señal |");
-    lines.push("|--------|--------|---|-----|-----|-------|");
+    lines.push("| Ticker | Sector | T | HR% | Price% | Señal |");
+    lines.push("|--------|--------|---|-----|--------|-------|");
     for (const r of s1) {
       lines.push(
-        `| ${r.ticker} | ${r.sector} | ${r.tier} | ${r.hrHistorical?.toFixed(1) ?? "—"}% | ${r.weeksActive} | ${r.signalDate ?? "?"} |`,
+        `| ${r.ticker} | ${r.sector} | ${r.tier} | ${r.hrHistorical?.toFixed(1) ?? "—"}% | ${r.pricePercentile}% | ${r.signalDate ?? "?"} |`,
       );
     }
   }
@@ -349,6 +362,7 @@ async function runWeeklyPipelineInner(): Promise<void> {
 
   const results = runScan(tickerBars);
   const s2Results = results.filter((r) => r.signalLevel === "S2");
+  const s2dResults = results.filter((r) => r.signalLevel === "S2D");
   const s1Results = results.filter((r) => r.signalLevel === "S1");
 
   // 4. Console output
@@ -360,7 +374,10 @@ async function runWeeklyPipelineInner(): Promise<void> {
   const csvPath = saveCSV(results, runDate);
   console.log(`  → ${csvPath}`);
 
-  // 6. Xpoz enrichment (only if S2 active).
+  // 6. Xpoz enrichment for S2 + S2D pool.
+  //    Both pure and degraded zero-crosses warrant Reddit confluence — the
+  //    Xpoz cost is one keyword search per ticker and a weekly cadence rarely
+  //    has more than ~10 zero-crosses across both buckets.
   //    WRAPPED: a throw here must NOT cascade past GitHub push (step 7) or
   //    the Telegram notification (step 8). Historical incident 2026-04-24:
   //    the old xpoz-enrich threw on 4xx from the nonexistent api.xpoz.io
@@ -368,12 +385,15 @@ async function runWeeklyPipelineInner(): Promise<void> {
   //    both downstream delivery channels. The pipeline now produces an empty
   //    xpozLines on failure rather than aborting.
   let xpozLines: string[] = [];
-  if (s2Results.length > 0) {
+  const enrichTargets = [...s2Results, ...s2dResults];
+  if (enrichTargets.length > 0) {
     console.log(
-      `\n[5/8] Xpoz enrichment for ${s2Results.length} S2 ticker(s)...`,
+      `\n[5/8] Xpoz enrichment for ${s2Results.length} S2 + ${s2dResults.length} S2D ticker(s)...`,
     );
     try {
-      const xpozResults = await enrichS2Tickers(s2Results.map((r) => r.ticker));
+      const xpozResults = await enrichS2Tickers(
+        enrichTargets.map((r) => r.ticker),
+      );
       xpozLines = formatXpozForTelegram(xpozResults);
     } catch (err) {
       console.error(
@@ -382,7 +402,7 @@ async function runWeeklyPipelineInner(): Promise<void> {
       );
     }
   } else {
-    console.log("[5/8] No S2 signals — skipping Xpoz enrichment");
+    console.log("[5/8] No S2 or S2D signals — skipping Xpoz enrichment");
   }
 
   // 7. Append to signals.md
@@ -414,12 +434,17 @@ async function runWeeklyPipelineInner(): Promise<void> {
   // Record successful completion so we can detect missed weeks on boot.
   writeLastRunWeek(weekLabel);
 
-  // 10. Stale signal check (informational)
-  const activeSignals = [...s2Results, ...s1Results].map((r) => ({
-    ticker: r.ticker,
-    signalLevel: r.signalLevel,
-    weeksActive: r.weeksActive,
-  }));
+  // 10. Stale signal check (informational).
+  //     expand.ts only flags S1 staleness today, but include S2 + S2D for
+  //     forward-compat — signals.md history shouldn't lose entries if expand's
+  //     warning logic ever extends to other levels.
+  const activeSignals = [...s2Results, ...s2dResults, ...s1Results].map(
+    (r) => ({
+      ticker: r.ticker,
+      signalLevel: r.signalLevel,
+      weeksActive: r.weeksActive,
+    }),
+  );
   checkStaleSignals(activeSignals);
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
