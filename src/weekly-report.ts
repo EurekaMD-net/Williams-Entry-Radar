@@ -57,6 +57,7 @@ function priceFlags(r: ScanResult): string {
 
 export function printReport(results: ScanResult[], runDate: string): void {
   const s2   = results.filter((r) => r.signalLevel === "S2");
+  const s2d  = results.filter((r) => r.signalLevel === "S2D");
   const s1   = results.filter((r) => r.signalLevel === "S1");
   const none = results.filter((r) => r.signalLevel === "none");
 
@@ -64,9 +65,7 @@ export function printReport(results: ScanResult[], runDate: string): void {
   console.log(`  WILLIAMS ENTRY RADAR — ${runDate}  (${getWeekLabel()})`);
   console.log("=".repeat(110));
 
-  // ── S2 — ATENCIÓN ─────────────────────────────────────────────────
-  if (s2.length > 0) {
-    console.log("\n  >> NIVEL 2 — ATENCION (S2: AC cruzo el cero esta semana, AO negativo)\n");
+  const signalTableHeader = () => {
     const header = [
       padRight("Ticker", 7),
       padRight("Sector", 6),
@@ -80,65 +79,56 @@ export function printReport(results: ScanResult[], runDate: string): void {
     ].join("  ");
     console.log("  " + header);
     console.log("  " + "-".repeat(107));
+  };
 
-    for (const r of s2) {
-      const row = [
-        padRight(r.ticker, 7),
-        padRight(r.sector, 6),
-        String(r.tier),
-        padLeft(fmt(r.hrHistorical, 1, "%"), 5),
-        padLeft(fmt(r.ao, 4), 8),
-        padLeft(fmt(r.ac, 4), 8),
-        padLeft(`${r.pricePercentile}%`, 5),
-        padLeft(r.aoLagHistorical ? `${r.aoLagHistorical}W` : "-", 7),
-        priceFlags(r),
-      ].join("  ");
-      console.log("  " + row);
-    }
+  const signalRow = (r: ScanResult) => {
+    const row = [
+      padRight(r.ticker, 7),
+      padRight(r.sector, 6),
+      String(r.tier),
+      padLeft(fmt(r.hrHistorical, 1, "%"), 5),
+      padLeft(fmt(r.ao, 4), 8),
+      padLeft(fmt(r.ac, 4), 8),
+      padLeft(`${r.pricePercentile}%`, 5),
+      padLeft(r.aoLagHistorical ? `${r.aoLagHistorical}W` : "-", 7),
+      priceFlags(r),
+    ].join("  ");
+    console.log("  " + row);
+  };
+
+  // ── S2 PURA — ATENCIÓN ────────────────────────────────────────────
+  if (s2.length > 0) {
+    console.log("\n  >> S2 PURA — ATENCION (AC cruzo el cero ESTA semana, AO negativo Y rojo)\n");
+    signalTableHeader();
+    for (const r of s2) signalRow(r);
   } else {
-    console.log("\n  >> NIVEL 2 — ATENCION (S2): Sin señales esta semana\n");
+    console.log("\n  >> S2 PURA — ATENCION: Sin señales esta semana");
+  }
+
+  // ── S2 DEGRADADA — POTENCIAL ──────────────────────────────────────
+  if (s2d.length > 0) {
+    console.log("\n  ~~ S2 DEGRADADA — POTENCIAL (AC cruzo el cero, pero AO ya iba verde = movimiento adelantado)\n");
+    signalTableHeader();
+    for (const r of s2d) signalRow(r);
+  } else {
+    console.log("  ~~ S2 DEGRADADA: ninguna");
   }
 
   // ── S1 — OBSERVACIÓN ──────────────────────────────────────────────
   if (s1.length > 0) {
-    console.log("\n  >  NIVEL 1 — OBSERVACION (S1: AC rojo->verde esta semana, AO y AC negativos)\n");
-    const header = [
-      padRight("Ticker", 7),
-      padRight("Sector", 6),
-      "T",
-      padLeft("HR%",  5),
-      padLeft("AO",   8),
-      padLeft("AC",   8),
-      padLeft("Pct",  5),
-      padLeft("ExpLag", 7),
-      "  Contexto",
-    ].join("  ");
-    console.log("  " + header);
-    console.log("  " + "-".repeat(107));
-
-    for (const r of s1) {
-      const row = [
-        padRight(r.ticker, 7),
-        padRight(r.sector, 6),
-        String(r.tier),
-        padLeft(fmt(r.hrHistorical, 1, "%"), 5),
-        padLeft(fmt(r.ao, 4), 8),
-        padLeft(fmt(r.ac, 4), 8),
-        padLeft(`${r.pricePercentile}%`, 5),
-        padLeft(r.aoLagHistorical ? `${r.aoLagHistorical}W` : "-", 7),
-        priceFlags(r),
-      ].join("  ");
-      console.log("  " + row);
-    }
+    console.log("\n  >  S1 — OBSERVACION (AC verde ESTA semana, AO y AC negativos)\n");
+    signalTableHeader();
+    for (const r of s1) signalRow(r);
   } else {
-    console.log("\n  >  NIVEL 1 — OBSERVACION (S1): Sin señales esta semana\n");
+    console.log("\n  >  S1 — OBSERVACION: Sin señales esta semana");
   }
 
   // ── RESUMEN ───────────────────────────────────────────────────────
-  const s2NearLows = s2.filter((r) => r.nearLows).length;
-  const s1NearLows = s1.filter((r) => r.nearLows).length;
+  const s2NearLows  = s2.filter((r) => r.nearLows).length;
+  const s2dNearLows = s2d.filter((r) => r.nearLows).length;
+  const s1NearLows  = s1.filter((r) => r.nearLows).length;
   console.log("\n" + "-".repeat(110));
-  console.log(`  RESUMEN: ${results.length} tickers  |  S2: ${s2.length} (${s2NearLows} en minimos)  |  S1: ${s1.length} (${s1NearLows} en minimos)  |  Sin senal: ${none.length}`);
+  console.log(`  RESUMEN: ${results.length} tickers  |  S2: ${s2.length} (${s2NearLows} en minimos)  |  S2D: ${s2d.length} (${s2dNearLows} en minimos)  |  S1: ${s1.length} (${s1NearLows} en minimos)  |  Sin senal: ${none.length}`);
   console.log("=".repeat(110) + "\n");
 }
 
@@ -149,13 +139,13 @@ export function saveCSV(results: ScanResult[], runDate: string): string {
   const filepath = path.join(RESULTS_DIR, filename);
 
   const headers = [
-    "ticker", "sector", "tier", "signalLevel", "signalDate", "weeksActive",
+    "ticker", "sector", "tier", "signalLevel", "signalQuality", "signalDate", "weeksActive",
     "ao", "ac", "acColor", "hrHistorical", "avgRetHistorical",
     "maxDdHistorical", "aoLagHistorical", "nearLows", "ranging", "pricePercentile",
   ];
 
   const rows = results.map((r) => [
-    r.ticker, r.sector, r.tier, r.signalLevel, r.signalDate ?? "",
+    r.ticker, r.sector, r.tier, r.signalLevel, r.signalQuality, r.signalDate ?? "",
     r.weeksActive, r.ao.toFixed(4), r.ac.toFixed(4), r.acColor,
     r.hrHistorical ?? "", r.avgRetHistorical ?? "", r.maxDdHistorical ?? "",
     r.aoLagHistorical ?? "", r.nearLows, r.ranging, r.pricePercentile,
