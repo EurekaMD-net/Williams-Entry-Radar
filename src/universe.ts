@@ -3,9 +3,10 @@
  *
  * Tier 1: Top 15 outliers from Phase 2 backtest (HR ≥ 73%, DD < 5%)
  * Tier 2: Remaining 79 tickers from Phase 2 backtest
+ * Tier 2 (new sectors): XLF, XLV, XLB, XLY — 20 tickers each, added 2026-04-25
  *
  * Expansion strategy: weekly additions starting from rank 21 per sector,
- * ordered by sector quality (XLU first → XLI → XLP → XLE).
+ * ordered by sector quality (XLU first → XLI → XLP → XLE → XLF → XLV → XLB → XLY).
  */
 
 export interface TickerMeta {
@@ -118,12 +119,110 @@ const TIER2_XLE: TickerMeta[] = [
   { ticker: "XOM",  sector: "XLE", tier: 2 },
 ];
 
+// --- NEW SECTORS (added 2026-04-25) ---
+
+const TIER2_XLF: TickerMeta[] = [
+  { ticker: "JPM",  sector: "XLF", tier: 2 },
+  { ticker: "BAC",  sector: "XLF", tier: 2 },
+  { ticker: "WFC",  sector: "XLF", tier: 2 },
+  { ticker: "GS",   sector: "XLF", tier: 2 },
+  { ticker: "MS",   sector: "XLF", tier: 2 },
+  { ticker: "BLK",  sector: "XLF", tier: 2 },
+  { ticker: "AXP",  sector: "XLF", tier: 2 },
+  { ticker: "COF",  sector: "XLF", tier: 2 },
+  { ticker: "USB",  sector: "XLF", tier: 2 },
+  { ticker: "TFC",  sector: "XLF", tier: 2 },
+  { ticker: "PNC",  sector: "XLF", tier: 2 },
+  { ticker: "SCHW", sector: "XLF", tier: 2 },
+  { ticker: "CB",   sector: "XLF", tier: 2 },
+  { ticker: "MET",  sector: "XLF", tier: 2 },
+  { ticker: "PRU",  sector: "XLF", tier: 2 },
+  { ticker: "AIG",  sector: "XLF", tier: 2 },
+  { ticker: "AFL",  sector: "XLF", tier: 2 },
+  { ticker: "ALL",  sector: "XLF", tier: 2 },
+  { ticker: "ICE",  sector: "XLF", tier: 2 },
+  { ticker: "CME",  sector: "XLF", tier: 2 },
+];
+
+const TIER2_XLV: TickerMeta[] = [
+  { ticker: "JNJ",  sector: "XLV", tier: 2 },
+  { ticker: "UNH",  sector: "XLV", tier: 2 },
+  { ticker: "LLY",  sector: "XLV", tier: 2 },
+  { ticker: "ABBV", sector: "XLV", tier: 2 },
+  { ticker: "MRK",  sector: "XLV", tier: 2 },
+  { ticker: "BMY",  sector: "XLV", tier: 2 },
+  { ticker: "PFE",  sector: "XLV", tier: 2 },
+  { ticker: "AMGN", sector: "XLV", tier: 2 },
+  { ticker: "GILD", sector: "XLV", tier: 2 },
+  { ticker: "CVS",  sector: "XLV", tier: 2 },
+  { ticker: "CI",   sector: "XLV", tier: 2 },
+  { ticker: "HUM",  sector: "XLV", tier: 2 },
+  { ticker: "ELV",  sector: "XLV", tier: 2 },
+  { ticker: "MDT",  sector: "XLV", tier: 2 },
+  { ticker: "ABT",  sector: "XLV", tier: 2 },
+  { ticker: "SYK",  sector: "XLV", tier: 2 },
+  { ticker: "BSX",  sector: "XLV", tier: 2 },
+  { ticker: "ZTS",  sector: "XLV", tier: 2 },
+  { ticker: "ISRG", sector: "XLV", tier: 2 },
+  { ticker: "BDX",  sector: "XLV", tier: 2 },
+];
+
+const TIER2_XLB: TickerMeta[] = [
+  { ticker: "LIN",  sector: "XLB", tier: 2 },
+  { ticker: "APD",  sector: "XLB", tier: 2 },
+  { ticker: "SHW",  sector: "XLB", tier: 2 },
+  { ticker: "ECL",  sector: "XLB", tier: 2 },
+  { ticker: "FCX",  sector: "XLB", tier: 2 },
+  { ticker: "NEM",  sector: "XLB", tier: 2 },
+  { ticker: "NUE",  sector: "XLB", tier: 2 },
+  { ticker: "VMC",  sector: "XLB", tier: 2 },
+  { ticker: "MLM",  sector: "XLB", tier: 2 },
+  { ticker: "DOW",  sector: "XLB", tier: 2 },
+  { ticker: "LYB",  sector: "XLB", tier: 2 },
+  { ticker: "EMN",  sector: "XLB", tier: 2 },
+  { ticker: "PPG",  sector: "XLB", tier: 2 },
+  { ticker: "ALB",  sector: "XLB", tier: 2 },
+  { ticker: "IFF",  sector: "XLB", tier: 2 },
+  { ticker: "CF",   sector: "XLB", tier: 2 },
+  { ticker: "MOS",  sector: "XLB", tier: 2 },
+  { ticker: "STLD", sector: "XLB", tier: 2 },
+  { ticker: "RS",   sector: "XLB", tier: 2 },
+  { ticker: "RPM",  sector: "XLB", tier: 2 },
+];
+
+const TIER2_XLY: TickerMeta[] = [
+  { ticker: "AMZN", sector: "XLY", tier: 2 },
+  { ticker: "TSLA", sector: "XLY", tier: 2 },
+  { ticker: "HD",   sector: "XLY", tier: 2 },
+  { ticker: "MCD",  sector: "XLY", tier: 2 },
+  { ticker: "NKE",  sector: "XLY", tier: 2 },
+  { ticker: "LOW",  sector: "XLY", tier: 2 },
+  { ticker: "SBUX", sector: "XLY", tier: 2 },
+  { ticker: "TJX",  sector: "XLY", tier: 2 },
+  { ticker: "BKNG", sector: "XLY", tier: 2 },
+  { ticker: "GM",   sector: "XLY", tier: 2 },
+  { ticker: "F",    sector: "XLY", tier: 2 },
+  { ticker: "ORLY", sector: "XLY", tier: 2 },
+  { ticker: "AZO",  sector: "XLY", tier: 2 },
+  { ticker: "ROST", sector: "XLY", tier: 2 },
+  { ticker: "YUM",  sector: "XLY", tier: 2 },
+  { ticker: "DHI",  sector: "XLY", tier: 2 },
+  { ticker: "LEN",  sector: "XLY", tier: 2 },
+  { ticker: "PHM",  sector: "XLY", tier: 2 },
+  { ticker: "DRI",  sector: "XLY", tier: 2 },
+  { ticker: "MAR",  sector: "XLY", tier: 2 },
+];
+
 export const UNIVERSE: TickerMeta[] = [
   ...TIER1,
   ...TIER2_XLU,
   ...TIER2_XLI,
   ...TIER2_XLP,
   ...TIER2_XLE,
+  ...TIER2_XLF,
+  ...TIER2_XLV,
+  ...TIER2_XLB,
+  ...TIER2_XLY,
 ];
 
 // Expansion schedule: add these weekly, in order, starting week 2
