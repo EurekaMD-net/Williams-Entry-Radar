@@ -60,6 +60,29 @@ export const SECTOR_COMPONENTS: Record<string, { tickers: string[]; name: string
   },
 };
 
+  XLK: {
+    name: "Technology",
+    tickers: [
+      "NVDA", "AAPL", "MSFT", "AVGO", "MU", "AMD", "CSCO", "PLTR", "LRCX", "AMAT",
+      "INTC", "ORCL", "TXN", "KLAC", "IBM", "ADI", "APH", "ANET", "CRM", "QCOM"
+    ]
+  },
+  XLC: {
+    name: "Comm.Services",
+    tickers: [
+      "META", "GOOGL", "GOOG", "DIS", "CMCSA", "CHTR", "TTWO", "SATS", "LYV", "OMC",
+      "EA", "NFLX", "WBD", "VZ", "T", "TMUS", "TKO", "FOXA", "TTD", "NWSA"
+    ]
+  },
+  XLRE: {
+    name: "Real Estate",
+    tickers: [
+      "WELL", "PLD", "EQIX", "AMT", "DLR", "SPG", "CBRE", "PSA", "O", "VTR",
+      "CCI", "IRM", "VICI", "EXR", "AVB", "SBAC", "EQR", "WY", "ESS", "KIM"
+    ]
+  },
+};
+
 // Also include SPY as macro filter (S&P 500 proxy)
 export const MACRO_TICKER = "SPY";
 
