@@ -18,7 +18,8 @@
  *   TELEGRAM_CHAT_ID     — Telegram chat
  *   GH_TOKEN             — GitHub personal access token
  *   GH_REPO              — GitHub repo (default: EurekaMD-net/Williams-Entry-Radar)
- *   XPOZ_API_KEY         — Xpoz API (optional — enrichment skipped if missing)
+ *   XPOZ_API_TOKEN       — local xpoz-pipeline auth (optional — enrichment skipped if missing)
+ *   XPOZ_BASE_URL        — local xpoz-pipeline base URL (default http://127.0.0.1:8086)
  *   TZ                   — should be America/Mexico_City
  *   RADAR_RESULTS_DIR    — override output dir (default: ./results)
  *   RADAR_DB_PATH        — override SQLite path (default: ./data/radar.db)
@@ -183,6 +184,106 @@ function writeLastRunWeek(weekLabel: string): void {
 }
 
 // ---------------------------------------------------------------------------
+// Delivery preflight
+// ---------------------------------------------------------------------------
+//
+// Runs at step 0 — before the 5-minute scan. If Telegram or GitHub credentials
+// are broken (expired tokens, wrong chat id, revoked access), operators should
+// see a loud warning in the journal immediately, not wait 6+ minutes to find
+// out at step 8 when the notification silently fails.
+//
+// Fail-warn, not fail-abort: a broken delivery channel shouldn't suppress the
+// CSV + signals.md outputs, which are still valuable for forensic review.
+
+interface PreflightResult {
+  channel: "telegram" | "github";
+  ok: boolean;
+  detail: string;
+}
+
+async function preflightTelegram(): Promise<PreflightResult> {
+  const token = process.env.TELEGRAM_BOT_TOKEN ?? "";
+  const chat = process.env.TELEGRAM_CHAT_ID ?? "";
+  if (!token || !chat) {
+    return {
+      channel: "telegram",
+      ok: false,
+      detail: "TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set",
+    };
+  }
+  try {
+    const me = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+    if (!me.ok) {
+      return {
+        channel: "telegram",
+        ok: false,
+        detail: `getMe ${me.status} — bot token invalid or revoked`,
+      };
+    }
+    // getChat probes that the bot can resolve this chat_id. Note: this is
+    // NOT proof that sendMessage will succeed — a bot kicked from some chat
+    // types still resolves getChat, and a typo'd chat_id can land on a
+    // different chat the bot also belongs to. It catches the common total-
+    // misconfig case (wrong digits, bot never added) but not every failure.
+    const chatRes = await fetch(
+      `https://api.telegram.org/bot${token}/getChat?chat_id=${encodeURIComponent(chat)}`,
+    );
+    if (!chatRes.ok) {
+      const body = await chatRes.text().catch(() => "(no body)");
+      return {
+        channel: "telegram",
+        ok: false,
+        detail: `getChat ${chatRes.status} — ${body.slice(0, 120)}`,
+      };
+    }
+    return { channel: "telegram", ok: true, detail: "bot + chat reachable" };
+  } catch (err) {
+    return {
+      channel: "telegram",
+      ok: false,
+      detail: `network error: ${(err as Error).message}`,
+    };
+  }
+}
+
+async function preflightGitHub(): Promise<PreflightResult> {
+  const token = process.env.GH_TOKEN ?? "";
+  if (!token) {
+    return { channel: "github", ok: false, detail: "GH_TOKEN not set" };
+  }
+  try {
+    const res = await fetch("https://api.github.com/user", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      return {
+        channel: "github",
+        ok: false,
+        detail: `/user ${res.status} — token expired or revoked`,
+      };
+    }
+    return { channel: "github", ok: true, detail: "token valid" };
+  } catch (err) {
+    return {
+      channel: "github",
+      ok: false,
+      detail: `network error: ${(err as Error).message}`,
+    };
+  }
+}
+
+async function runDeliveryPreflight(): Promise<void> {
+  const [tg, gh] = await Promise.all([preflightTelegram(), preflightGitHub()]);
+  for (const r of [tg, gh]) {
+    if (r.ok) {
+      console.log(`[preflight] ${r.channel}: OK (${r.detail})`);
+    } else {
+      console.warn(`[preflight] ${r.channel}: BROKEN — ${r.detail}`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main pipeline
 // ---------------------------------------------------------------------------
 
@@ -211,6 +312,12 @@ async function runWeeklyPipelineInner(): Promise<void> {
   console.log("\n" + "═".repeat(80));
   console.log(`  WILLIAMS ENTRY RADAR — PIPELINE SEMANAL — ${weekLabel}`);
   console.log("═".repeat(80));
+
+  // 0. Delivery preflight — surface broken Telegram/GitHub creds up front
+  //    so operators don't find out 6 min later at step 8. Warn-only: we still
+  //    produce CSV + signals.md even if delivery is down.
+  console.log("\n[0/8] Delivery preflight...");
+  await runDeliveryPreflight();
 
   // 1. Ensure registry is populated
   seedRegistry();
@@ -253,14 +360,27 @@ async function runWeeklyPipelineInner(): Promise<void> {
   const csvPath = saveCSV(results, runDate);
   console.log(`  → ${csvPath}`);
 
-  // 6. Xpoz enrichment (only if S2 active)
+  // 6. Xpoz enrichment (only if S2 active).
+  //    WRAPPED: a throw here must NOT cascade past GitHub push (step 7) or
+  //    the Telegram notification (step 8). Historical incident 2026-04-24:
+  //    the old xpoz-enrich threw on 4xx from the nonexistent api.xpoz.io
+  //    REST endpoint, which aborted the entire pipeline and collateral-killed
+  //    both downstream delivery channels. The pipeline now produces an empty
+  //    xpozLines on failure rather than aborting.
   let xpozLines: string[] = [];
   if (s2Results.length > 0) {
     console.log(
       `\n[5/8] Xpoz enrichment for ${s2Results.length} S2 ticker(s)...`,
     );
-    const xpozResults = await enrichS2Tickers(s2Results.map((r) => r.ticker));
-    xpozLines = formatXpozForTelegram(xpozResults);
+    try {
+      const xpozResults = await enrichS2Tickers(s2Results.map((r) => r.ticker));
+      xpozLines = formatXpozForTelegram(xpozResults);
+    } catch (err) {
+      console.error(
+        "[scheduler] Xpoz enrichment failed — continuing without it:",
+        err,
+      );
+    }
   } else {
     console.log("[5/8] No S2 signals — skipping Xpoz enrichment");
   }

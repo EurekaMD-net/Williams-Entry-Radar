@@ -138,6 +138,8 @@ SQLite-backed scanner that runs weekly, fetches current data, detects active S1/
 ### Architecture
 
 ```
+delivery preflight (Telegram getMe/getChat + GitHub /user — warn on broken)
+  ↓
 Universe (79 tickers, 3 tiers)
   ↓
 fetch (AV Premium, sequential 1s delay, ~80s for full universe)
@@ -148,8 +150,19 @@ detect S1 + S2 (signals.ts / signals-s2.ts)
   ↓
 weekly report (console + CSV in results/)
   ↓
-push to GitHub
+[if S2] xpoz enrichment (POST localhost:8086/search/keyword — wrapped: failures
+  cannot block downstream delivery)
+  ↓
+push to GitHub (wrapped — failures cannot block Telegram)
+  ↓
+send Telegram
 ```
+
+Delivery preflight runs at step 0 so misconfigured Telegram or GitHub
+credentials surface immediately in the journal instead of after the 5-minute
+scan. Xpoz enrichment routes through the local `xpoz-pipeline` service
+(`/root/claude/projects/xpoz-pipeline/`) — the previous direct REST call to
+`api.xpoz.io` was wired against a nonexistent endpoint.
 
 ### W17-2026 First Run — Results
 
