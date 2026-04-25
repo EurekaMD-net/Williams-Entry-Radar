@@ -8,7 +8,7 @@ const RESULTS_DIR = "/tmp/williams-entry-radar/results";
 const PHASE3_SECTORS = ["XLK", "XLC", "XLRE"];
 const sectorNames: Record<string, string> = { XLK: "Technology", XLC: "Comm.Services", XLRE: "Real Estate" };
 
-interface WeeklyCandle { date: string; open: number; high: number; low: number; close: number; volume: number; }
+interface WeeklyCandle { date: string; open: number; high: number; low: number; close: number; volume: number; midpoint: number; }
 interface SignalOutcome { ticker: string; date: string; sector: string; ret4W: number; ret8W: number; ret12W: number; maxDD: number; aoLag: number; macroFilter: "bull"|"bear"; clean: boolean; }
 interface TickerResult { ticker: string; sector: string; sectorName: string; totalSignals: number; hitRate8W: number; avgReturn4W: number; avgReturn8W: number; avgReturn12W: number; avgMaxDD: number; avgAoLag: number; cleanSignals: number; cleanHitRate: number; score: number; bestReturn8W: number; worstReturn8W: number; }
 

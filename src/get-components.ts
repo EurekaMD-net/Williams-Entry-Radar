@@ -1,8 +1,7 @@
 /**
- * Phase 2 — Component Lists
- * Top 20 tickers by market cap for 4 sectors: XLU, XLP, XLE, XLI
- * Source: iShares/SPDR ETF holdings (hardcoded as of April 2026)
- * These are the major constituents by weight — proxy for market cap rank
+ * Component Lists — All 11 SPDR Sector ETFs
+ * Top 20 tickers by market cap per sector
+ * Source: SSGA ETF holdings (as of April 2026)
  */
 
 export const SECTOR_COMPONENTS: Record<string, { tickers: string[]; name: string }> = {
@@ -37,29 +36,31 @@ export const SECTOR_COMPONENTS: Record<string, { tickers: string[]; name: string
   XLF: {
     name: "Financials",
     tickers: [
-      "JPM", "BAC", "WFC", "GS", "MS", "BLK", "AXP", "COF", "USB", "TFC", "PNC", "SCHW", "CB", "MET", "PRU", "AIG", "AFL", "ALL", "ICE", "CME"
+      "JPM", "BAC", "WFC", "GS", "MS", "BLK", "AXP", "COF", "USB", "TFC",
+      "PNC", "SCHW", "CB", "MET", "PRU", "AIG", "AFL", "ALL", "ICE", "CME"
     ]
   },
   XLV: {
     name: "Healthcare",
     tickers: [
-      "JNJ", "UNH", "LLY", "ABBV", "MRK", "BMY", "PFE", "AMGN", "GILD", "CVS", "CI", "HUM", "ELV", "MDT", "ABT", "SYK", "BSX", "ZTS", "ISRG", "BDX"
+      "JNJ", "UNH", "LLY", "ABBV", "MRK", "BMY", "PFE", "AMGN", "GILD", "CVS",
+      "CI", "HUM", "ELV", "MDT", "ABT", "SYK", "BSX", "ZTS", "ISRG", "BDX"
     ]
   },
   XLB: {
     name: "Materials",
     tickers: [
-      "LIN", "APD", "SHW", "ECL", "FCX", "NEM", "NUE", "VMC", "MLM", "DOW", "LYB", "EMN", "PPG", "ALB", "IFF", "CF", "MOS", "STLD", "RS", "RPM"
+      "LIN", "APD", "SHW", "ECL", "FCX", "NEM", "NUE", "VMC", "MLM", "DOW",
+      "LYB", "EMN", "PPG", "ALB", "IFF", "CF", "MOS", "STLD", "RS", "RPM"
     ]
   },
   XLY: {
     name: "Cons.Disc",
     tickers: [
-      "AMZN", "TSLA", "HD", "MCD", "NKE", "LOW", "SBUX", "TJX", "BKNG", "GM", "F", "ORLY", "AZO", "ROST", "YUM", "DHI", "LEN", "PHM", "DRI", "MAR"
+      "AMZN", "TSLA", "HD", "MCD", "NKE", "LOW", "SBUX", "TJX", "BKNG", "GM",
+      "F", "ORLY", "AZO", "ROST", "YUM", "DHI", "LEN", "PHM", "DRI", "MAR"
     ]
   },
-};
-
   XLK: {
     name: "Technology",
     tickers: [
@@ -83,7 +84,7 @@ export const SECTOR_COMPONENTS: Record<string, { tickers: string[]; name: string
   },
 };
 
-// Also include SPY as macro filter (S&P 500 proxy)
+// SPY as macro filter (S&P 500 proxy)
 export const MACRO_TICKER = "SPY";
 
 export function getAllTickers(): string[] {
