@@ -4,7 +4,9 @@
  * Evaluates ONLY the last bar (current week). No lookback windows for signal validity.
  *
  * S1 — Observation: last bar has AO<0, AC<0, AC[t] > AC[t-1] (AC turned green)
- * S2 — Attention: last bar has AO<0, AC[t-1]<0 AND AC[t]>=0 (AC just crossed zero)
+ * S2 PURE — Attention: AO<0 AND AO[t]<AO[t-1] (AO still red/falling) AND AC crossed zero this week
+ * S2 DEGRADED — AO<0 AND AO[t]>=AO[t-1] (AO already green/recovering) AND AC crossed zero this week
+ *              The move started before AC confirmed — potential upside but not a clean entry.
  *
  * Price context (104-week window):
  *   nearLows  — close in bottom 30th percentile of 104-week range → doubly interesting
@@ -15,13 +17,15 @@ import type { WeeklyBar } from "./fetcher.js";
 import { calculateIndicators } from "./indicators.js";
 import { getMetaForTicker } from "./universe.js";
 
-export type SignalLevel = "S2" | "S1" | "none";
+export type SignalLevel = "S2" | "S2D" | "S1" | "none";
+export type SignalQuality = "pure" | "degraded" | "n/a";
 
 export interface ScanResult {
   ticker: string;
   sector: string;
   tier: 1 | 2;
   signalLevel: SignalLevel;
+  signalQuality: SignalQuality; // "pure" = all conditions clean, "degraded" = AO already recovering
   signalDate: string | null;
   weeksActive: number;        // always 0 — signal is this week only
   ao: number;
@@ -70,7 +74,7 @@ export function scanTicker(ticker: string, bars: WeeklyBar[]): ScanResult {
   const sector = meta?.sector ?? "?";
   const tier   = meta?.tier ?? 2;
 
-  const base: Omit<ScanResult, "signalLevel" | "signalDate" | "weeksActive" | "ao" | "ac" | "acColor" | "nearLows" | "ranging" | "pricePercentile"> = {
+  const base: Omit<ScanResult, "signalLevel" | "signalQuality" | "signalDate" | "weeksActive" | "ao" | "ac" | "acColor" | "nearLows" | "ranging" | "pricePercentile"> = {
     ticker,
     sector,
     tier,
@@ -85,7 +89,7 @@ export function scanTicker(ticker: string, bars: WeeklyBar[]): ScanResult {
     : { nearLows: false, ranging: false, pricePercentile: 50 };
 
   if (bars.length < 40) {
-    return { ...base, signalLevel: "none", signalDate: null, weeksActive: 0, ao: 0, ac: 0, acColor: "?", ...ctx };
+    return { ...base, signalLevel: "none", signalQuality: "n/a", signalDate: null, weeksActive: 0, ao: 0, ac: 0, acColor: "?", ...ctx };
   }
 
   const indicatorBars = calculateIndicators(bars.map((b) => ({
@@ -99,19 +103,39 @@ export function scanTicker(ticker: string, bars: WeeklyBar[]): ScanResult {
   })));
 
   if (indicatorBars.length < 2) {
-    return { ...base, signalLevel: "none", signalDate: null, weeksActive: 0, ao: 0, ac: 0, acColor: "?", ...ctx };
+    return { ...base, signalLevel: "none", signalQuality: "n/a", signalDate: null, weeksActive: 0, ao: 0, ac: 0, acColor: "?", ...ctx };
   }
 
   const last = indicatorBars[indicatorBars.length - 1];
   const prev = indicatorBars[indicatorBars.length - 2];
   const { ao, ac, acColor, date } = last;
 
-  // ── S2: AC crossed zero THIS week (prev<0 → curr>=0), AO still negative ───
-  // Ranging tickers are excluded — lateral price action makes the cross noise, not signal.
-  if (prev.ac < 0 && ac >= 0 && ao < 0 && !ctx.ranging) {
+  // ── S2 PURE: AC crossed zero THIS week, AO negative AND still falling (rojo) ─
+  // AO[t] < AO[t-1] means AO is still red — momentum hasn't started recovering yet.
+  // This is the cleanest entry: both oscillators agree the move hasn't begun.
+  // Ranging tickers excluded — lateral price action makes the cross noise, not signal.
+  if (prev.ac < 0 && ac >= 0 && ao < 0 && ao < prev.ao && !ctx.ranging) {
     return {
       ...base,
       signalLevel: "S2",
+      signalQuality: "pure",
+      signalDate: date,
+      weeksActive: 0,
+      ao, ac, acColor,
+      ...ctx,
+    };
+  }
+
+  // ── S2 DEGRADED: AC crossed zero THIS week, AO negative but already green ──
+  // AO[t] >= AO[t-1] means AO is already recovering — the move started before AC confirmed.
+  // Still worth watching (potential upside remains), but not a clean entry signal.
+  // Example: BA in W17 2026 — AO had multiple green bars before AC crossed.
+  // Ranging tickers excluded.
+  if (prev.ac < 0 && ac >= 0 && ao < 0 && ao >= prev.ao && !ctx.ranging) {
+    return {
+      ...base,
+      signalLevel: "S2D",
+      signalQuality: "degraded",
       signalDate: date,
       weeksActive: 0,
       ao, ac, acColor,
@@ -127,6 +151,7 @@ export function scanTicker(ticker: string, bars: WeeklyBar[]): ScanResult {
     return {
       ...base,
       signalLevel: "S1",
+      signalQuality: "n/a",
       signalDate: date,
       weeksActive: 0,
       ao, ac, acColor,
@@ -134,7 +159,7 @@ export function scanTicker(ticker: string, bars: WeeklyBar[]): ScanResult {
     };
   }
 
-  return { ...base, signalLevel: "none", signalDate: null, weeksActive: 0, ao, ac, acColor, ...ctx };
+  return { ...base, signalLevel: "none", signalQuality: "n/a", signalDate: null, weeksActive: 0, ao, ac, acColor, ...ctx };
 }
 
 export function runScan(tickerBars: Map<string, WeeklyBar[]>): ScanResult[] {
@@ -149,7 +174,7 @@ export function runScan(tickerBars: Map<string, WeeklyBar[]>): ScanResult[] {
   // Sort: S2 first, then S1, then none
   // Within same level: nearLows first, then Tier 1, then HR desc
   results.sort((a, b) => {
-    const levelOrder: Record<SignalLevel, number> = { S2: 0, S1: 1, none: 2 };
+    const levelOrder: Record<SignalLevel, number> = { S2: 0, S2D: 1, S1: 2, none: 3 };
     if (levelOrder[a.signalLevel] !== levelOrder[b.signalLevel]) {
       return levelOrder[a.signalLevel] - levelOrder[b.signalLevel];
     }
