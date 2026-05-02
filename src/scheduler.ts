@@ -34,6 +34,7 @@ import { runScan } from "./scanner.js";
 import { printReport, saveCSV, getWeekLabel } from "./weekly-report.js";
 import { enrichS2Tickers, formatXpozForTelegram } from "./xpoz-enrich.js";
 import { pushWeeklyResults } from "./git-push.js";
+import { generateJournalPage } from "./journal-generator.js";
 import { buildTelegramMessage, sendTelegram } from "./notify.js";
 import { checkStaleSignals } from "./expand.js";
 import { seedRegistry } from "./cache.js";
@@ -434,7 +435,19 @@ async function runWeeklyPipelineInner(): Promise<void> {
   // Record successful completion so we can detect missed weeks on boot.
   writeLastRunWeek(weekLabel);
 
-  // 10. Stale signal check (informational).
+  // 10. Generate Journal page — ALL prices sourced from radar.db.
+  //     Wrapped: a failure here must NOT abort the pipeline. The Journal is
+  //     a downstream artifact; CSV + signals.md + Telegram are the critical
+  //     deliverables. Any error is logged but does not propagate.
+  console.log("\n[9/9] Generating Journal page...");
+  try {
+    const journalPath = generateJournalPage(weekLabel, results, results.length);
+    console.log(`  → ${journalPath}`);
+  } catch (err) {
+    console.error("[scheduler] Journal generation failed — continuing:", err);
+  }
+
+  // 11. Stale signal check (informational).
   //     expand.ts only flags S1 staleness today, but include S2 + S2D for
   //     forward-compat — signals.md history shouldn't lose entries if expand's
   //     warning logic ever extends to other levels.
