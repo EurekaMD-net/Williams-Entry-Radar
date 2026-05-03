@@ -39,7 +39,7 @@ import { buildTelegramMessage, sendTelegram } from "./notify.js";
 import { checkStaleSignals } from "./expand.js";
 import { seedRegistry } from "./cache.js";
 import { getUniverseTickers } from "./universe.js";
-import { readCache } from "./cache.js";
+import { loadBars } from "./db.js";
 import type { WeeklyBar } from "./fetcher.js";
 import { DEFAULT_TZ } from "./time.js";
 import fs from "fs";
@@ -341,23 +341,23 @@ async function runWeeklyPipelineInner(): Promise<void> {
   const tickers = getUniverseTickers();
   await fetchAll(tickers);
 
-  // 3. Load bars from cache and run scan
+  // 3. Load bars directly from radar.db and run scan.
+  //    loadBars() is the authoritative single source of truth — avoids the
+  //    AVRawSeries re-serialization/re-parse round-trip that caused W18 price
+  //    inaccuracies when the JSON-cache and DB were out of sync.
   console.log("\n[2/8] Running scan...");
   const tickerBars = new Map<string, WeeklyBar[]>();
   for (const ticker of tickers) {
-    const raw = readCache(ticker);
-    if (!raw) continue;
-    // Parse bars from raw cache (same as migrate-cache.ts)
-    const bars: WeeklyBar[] = Object.entries(raw)
-      .map(([date, vals]) => ({
-        date,
-        open: parseFloat(vals["1. open"]),
-        high: parseFloat(vals["2. high"]),
-        low: parseFloat(vals["3. low"]),
-        close: parseFloat(vals["5. adjusted close"]),
-        volume: parseInt(vals["6. volume"] ?? vals["5. volume"] ?? "0", 10),
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    const rows = loadBars(ticker);
+    if (rows.length === 0) continue;
+    const bars: WeeklyBar[] = rows.map((r) => ({
+      date: r.date,
+      open: r.open,
+      high: r.high,
+      low: r.low,
+      close: r.close,
+      volume: r.volume,
+    }));
     tickerBars.set(ticker, bars);
   }
 
