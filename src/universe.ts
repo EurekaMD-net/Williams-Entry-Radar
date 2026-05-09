@@ -60,6 +60,14 @@ const TIER2_XLU: TickerMeta[] = [
   { ticker: "PCG",  sector: "XLU", tier: 2 },
   { ticker: "PPL",  sector: "XLU", tier: 2 },
   { ticker: "XEL",  sector: "XLU", tier: 2 },
+  // W20 expansion (positions 24-30)
+  { ticker: "EVRG", sector: "XLU", tier: 2 },
+  { ticker: "PNW",  sector: "XLU", tier: 2 },
+  { ticker: "OGE",  sector: "XLU", tier: 2 },
+  { ticker: "SR",   sector: "XLU", tier: 2 },
+  { ticker: "NWE",  sector: "XLU", tier: 2 },
+  { ticker: "OTTR", sector: "XLU", tier: 2 },
+  { ticker: "POR",  sector: "XLU", tier: 2 },
 ];
 
 const TIER2_XLI: TickerMeta[] = [
@@ -80,6 +88,17 @@ const TIER2_XLI: TickerMeta[] = [
   { ticker: "UNP",  sector: "XLI", tier: 2 },
   { ticker: "UPS",  sector: "XLI", tier: 2 },
   { ticker: "WAB",  sector: "XLI", tier: 2 },
+  // W20 expansion — GEV/UBER/VRT/PWR are top-10 XLI by weight
+  { ticker: "GEV",  sector: "XLI", tier: 2 },
+  { ticker: "UBER", sector: "XLI", tier: 2 },
+  { ticker: "VRT",  sector: "XLI", tier: 2 },
+  { ticker: "PWR",  sector: "XLI", tier: 2 },
+  { ticker: "CARR", sector: "XLI", tier: 2 },
+  { ticker: "OTIS", sector: "XLI", tier: 2 },
+  { ticker: "XYL",  sector: "XLI", tier: 2 },
+  { ticker: "IR",   sector: "XLI", tier: 2 },
+  { ticker: "HUBB", sector: "XLI", tier: 2 },
+  { ticker: "NSC",  sector: "XLI", tier: 2 },
 ];
 
 const TIER2_XLP: TickerMeta[] = [
@@ -98,6 +117,19 @@ const TIER2_XLP: TickerMeta[] = [
   { ticker: "SYY",  sector: "XLP", tier: 2 },
   { ticker: "TSN",  sector: "XLP", tier: 2 },
   { ticker: "WMT",  sector: "XLP", tier: 2 },
+  // W20 expansion — TGT (#10) and MNST (#11) are critical XLP omissions
+  { ticker: "TGT",  sector: "XLP", tier: 2 },
+  { ticker: "MNST", sector: "XLP", tier: 2 },
+  { ticker: "KDP",  sector: "XLP", tier: 2 },
+  { ticker: "KR",   sector: "XLP", tier: 2 },
+  { ticker: "ADM",  sector: "XLP", tier: 2 },
+  { ticker: "CHD",  sector: "XLP", tier: 2 },
+  { ticker: "SJM",  sector: "XLP", tier: 2 },
+  { ticker: "CAG",  sector: "XLP", tier: 2 },
+  { ticker: "CPB",  sector: "XLP", tier: 2 },
+  { ticker: "TAP",  sector: "XLP", tier: 2 },
+  { ticker: "STZ",  sector: "XLP", tier: 2 },
+  { ticker: "EL",   sector: "XLP", tier: 2 },
 ];
 
 const TIER2_XLE: TickerMeta[] = [
@@ -117,6 +149,21 @@ const TIER2_XLE: TickerMeta[] = [
   { ticker: "VLO",  sector: "XLE", tier: 2 },
   { ticker: "WMB",  sector: "XLE", tier: 2 },
   { ticker: "XOM",  sector: "XLE", tier: 2 },
+  // W20 expansion — E&P and midstream
+  { ticker: "EOG",  sector: "XLE", tier: 2 },
+  { ticker: "DVN",  sector: "XLE", tier: 2 },
+  { ticker: "CTRA", sector: "XLE", tier: 2 },
+  { ticker: "TRGP", sector: "XLE", tier: 2 },
+  { ticker: "RRC",  sector: "XLE", tier: 2 },
+  { ticker: "AR",   sector: "XLE", tier: 2 },
+  { ticker: "SM",   sector: "XLE", tier: 2 },
+  { ticker: "OVV",  sector: "XLE", tier: 2 },
+  { ticker: "MUR",  sector: "XLE", tier: 2 },
+  { ticker: "CHK",  sector: "XLE", tier: 2 },
+  { ticker: "AM",   sector: "XLE", tier: 2 },
+  { ticker: "PR",   sector: "XLE", tier: 2 },
+  { ticker: "KMI",  sector: "XLE", tier: 2 },
+  { ticker: "LNG",  sector: "XLE", tier: 2 },
 ];
 
 // --- NEW SECTORS (added 2026-04-25) ---
@@ -142,6 +189,17 @@ const TIER2_XLF: TickerMeta[] = [
   { ticker: "ALL",  sector: "XLF", tier: 2 },
   { ticker: "ICE",  sector: "XLF", tier: 2 },
   { ticker: "CME",  sector: "XLF", tier: 2 },
+  // W20 expansion — BRK.B (#1), V (#3), MA (#4) son TOP holdings de XLF omitidos
+  { ticker: "BRK.B", sector: "XLF", tier: 2 },
+  { ticker: "V",    sector: "XLF", tier: 2 },
+  { ticker: "MA",   sector: "XLF", tier: 2 },
+  { ticker: "C",    sector: "XLF", tier: 2 },
+  { ticker: "SPGI", sector: "XLF", tier: 2 },
+  { ticker: "MSCI", sector: "XLF", tier: 2 },
+  { ticker: "MCO",  sector: "XLF", tier: 2 },
+  { ticker: "TROW", sector: "XLF", tier: 2 },
+  { ticker: "NTRS", sector: "XLF", tier: 2 },
+  { ticker: "RF",   sector: "XLF", tier: 2 },
 ];
 
 const TIER2_XLV: TickerMeta[] = [
@@ -165,6 +223,17 @@ const TIER2_XLV: TickerMeta[] = [
   { ticker: "ZTS",  sector: "XLV", tier: 2 },
   { ticker: "ISRG", sector: "XLV", tier: 2 },
   { ticker: "BDX",  sector: "XLV", tier: 2 },
+  // W20 expansion — med devices, diagnostics, specialty pharma
+  { ticker: "DXCM", sector: "XLV", tier: 2 },
+  { ticker: "IQV",  sector: "XLV", tier: 2 },
+  { ticker: "IDXX", sector: "XLV", tier: 2 },
+  { ticker: "MTD",  sector: "XLV", tier: 2 },
+  { ticker: "WAT",  sector: "XLV", tier: 2 },
+  { ticker: "COO",  sector: "XLV", tier: 2 },
+  { ticker: "EW",   sector: "XLV", tier: 2 },
+  { ticker: "HOLX", sector: "XLV", tier: 2 },
+  { ticker: "HSIC", sector: "XLV", tier: 2 },
+  { ticker: "DVA",  sector: "XLV", tier: 2 },
 ];
 
 const TIER2_XLB: TickerMeta[] = [
@@ -188,6 +257,17 @@ const TIER2_XLB: TickerMeta[] = [
   { ticker: "STLD", sector: "XLB", tier: 2 },
   { ticker: "RS",   sector: "XLB", tier: 2 },
   { ticker: "RPM",  sector: "XLB", tier: 2 },
+  // W20 expansion — packaging, specialty chemicals, diversified materials
+  { ticker: "FMC",  sector: "XLB", tier: 2 },
+  { ticker: "DD",   sector: "XLB", tier: 2 },
+  { ticker: "BALL", sector: "XLB", tier: 2 },
+  { ticker: "AVY",  sector: "XLB", tier: 2 },
+  { ticker: "SEE",  sector: "XLB", tier: 2 },
+  { ticker: "SON",  sector: "XLB", tier: 2 },
+  { ticker: "OLN",  sector: "XLB", tier: 2 },
+  { ticker: "HUN",  sector: "XLB", tier: 2 },
+  { ticker: "CC",   sector: "XLB", tier: 2 },
+  { ticker: "AMCR", sector: "XLB", tier: 2 },
 ];
 
 const TIER2_XLY: TickerMeta[] = [
@@ -211,6 +291,17 @@ const TIER2_XLY: TickerMeta[] = [
   { ticker: "PHM",  sector: "XLY", tier: 2 },
   { ticker: "DRI",  sector: "XLY", tier: 2 },
   { ticker: "MAR",  sector: "XLY", tier: 2 },
+  // W20 expansion — travel, leisure, hospitality, gaming
+  { ticker: "HLT",  sector: "XLY", tier: 2 },
+  { ticker: "CCL",  sector: "XLY", tier: 2 },
+  { ticker: "RCL",  sector: "XLY", tier: 2 },
+  { ticker: "NCLH", sector: "XLY", tier: 2 },
+  { ticker: "H",    sector: "XLY", tier: 2 },
+  { ticker: "WYNN", sector: "XLY", tier: 2 },
+  { ticker: "MGM",  sector: "XLY", tier: 2 },
+  { ticker: "LVS",  sector: "XLY", tier: 2 },
+  { ticker: "CMG",  sector: "XLY", tier: 2 },
+  { ticker: "EXPE", sector: "XLY", tier: 2 },
 ];
 
 // --- NEW SECTORS batch 2 (added 2026-04-25) ---
@@ -235,6 +326,17 @@ const TIER2_XLK: TickerMeta[] = [
   { ticker: "ANET",  sector: "XLK", tier: 2 },
   { ticker: "CRM",   sector: "XLK", tier: 2 },
   { ticker: "QCOM",  sector: "XLK", tier: 2 },
+  // W20 expansion — enterprise software, networking, semis positions 21-30
+  { ticker: "NOW",   sector: "XLK", tier: 2 },
+  { ticker: "PANW",  sector: "XLK", tier: 2 },
+  { ticker: "FTNT",  sector: "XLK", tier: 2 },
+  { ticker: "CDNS",  sector: "XLK", tier: 2 },
+  { ticker: "SNPS",  sector: "XLK", tier: 2 },
+  { ticker: "MCHP",  sector: "XLK", tier: 2 },
+  { ticker: "ON",    sector: "XLK", tier: 2 },
+  { ticker: "MPWR",  sector: "XLK", tier: 2 },
+  { ticker: "GLW",   sector: "XLK", tier: 2 },
+  { ticker: "STX",   sector: "XLK", tier: 2 },
 ];
 
 const TIER2_XLC: TickerMeta[] = [
@@ -258,6 +360,17 @@ const TIER2_XLC: TickerMeta[] = [
   { ticker: "FOXA",  sector: "XLC", tier: 2 },
   { ticker: "TTD",   sector: "XLC", tier: 2 },
   { ticker: "NWSA",  sector: "XLC", tier: 2 },
+  // W20 expansion — streaming, social, platforms
+  { ticker: "PINS",  sector: "XLC", tier: 2 },
+  { ticker: "SNAP",  sector: "XLC", tier: 2 },
+  { ticker: "SPOT",  sector: "XLC", tier: 2 },
+  { ticker: "RBLX",  sector: "XLC", tier: 2 },
+  { ticker: "DASH",  sector: "XLC", tier: 2 },
+  { ticker: "MTCH",  sector: "XLC", tier: 2 },
+  { ticker: "PARA",  sector: "XLC", tier: 2 },
+  { ticker: "IPG",   sector: "XLC", tier: 2 },
+  { ticker: "ZG",    sector: "XLC", tier: 2 },
+  { ticker: "IAC",   sector: "XLC", tier: 2 },
 ];
 
 const TIER2_XLRE: TickerMeta[] = [
@@ -281,6 +394,17 @@ const TIER2_XLRE: TickerMeta[] = [
   { ticker: "WY",    sector: "XLRE", tier: 2 },
   { ticker: "ESS",   sector: "XLRE", tier: 2 },
   { ticker: "KIM",   sector: "XLRE", tier: 2 },
+  // W20 expansion — diversified REITs, residential, office
+  { ticker: "ARE",   sector: "XLRE", tier: 2 },
+  { ticker: "MAA",   sector: "XLRE", tier: 2 },
+  { ticker: "UDR",   sector: "XLRE", tier: 2 },
+  { ticker: "CPT",   sector: "XLRE", tier: 2 },
+  { ticker: "HST",   sector: "XLRE", tier: 2 },
+  { ticker: "REG",   sector: "XLRE", tier: 2 },
+  { ticker: "BXP",   sector: "XLRE", tier: 2 },
+  { ticker: "FR",    sector: "XLRE", tier: 2 },
+  { ticker: "EGP",   sector: "XLRE", tier: 2 },
+  { ticker: "NNN",   sector: "XLRE", tier: 2 },
 ];
 
 const TIER2_IBB: TickerMeta[] = [
@@ -304,6 +428,17 @@ const TIER2_IBB: TickerMeta[] = [
   { ticker: "NBIX",  sector: "IBB", tier: 2 },
   { ticker: "IONS",  sector: "IBB", tier: 2 },
   { ticker: "BBIO",  sector: "IBB", tier: 2 },
+  // W20 expansion — genomics, rare disease, next-gen biotech
+  { ticker: "EXAS",  sector: "IBB", tier: 2 },
+  { ticker: "RARE",  sector: "IBB", tier: 2 },
+  { ticker: "HALO",  sector: "IBB", tier: 2 },
+  { ticker: "IMVT",  sector: "IBB", tier: 2 },
+  { ticker: "ARCT",  sector: "IBB", tier: 2 },
+  { ticker: "EDIT",  sector: "IBB", tier: 2 },
+  { ticker: "NTLA",  sector: "IBB", tier: 2 },
+  { ticker: "FATE",  sector: "IBB", tier: 2 },
+  { ticker: "XNCR",  sector: "IBB", tier: 2 },
+  { ticker: "SGEN",  sector: "IBB", tier: 2 },
 ];
 
 const TIER2_XBI: TickerMeta[] = [
@@ -326,6 +461,18 @@ const TIER2_XBI: TickerMeta[] = [
   { ticker: "KYMR",  sector: "XBI", tier: 2 },
   { ticker: "PTGX",  sector: "XBI", tier: 2 },
   { ticker: "PCVX",  sector: "XBI", tier: 2 },
+  // W20 expansion — small/mid-cap biotech
+  { ticker: "RXRX",  sector: "XBI", tier: 2 },
+  { ticker: "ACAD",  sector: "XBI", tier: 2 },
+  { ticker: "FOLD",  sector: "XBI", tier: 2 },
+  { ticker: "BPMC",  sector: "XBI", tier: 2 },
+  { ticker: "RCUS",  sector: "XBI", tier: 2 },
+  { ticker: "VKTX",  sector: "XBI", tier: 2 },
+  { ticker: "ALLO",  sector: "XBI", tier: 2 },
+  { ticker: "SAGE",  sector: "XBI", tier: 2 },
+  { ticker: "SRPT",  sector: "XBI", tier: 2 },
+  { ticker: "AGIO",  sector: "XBI", tier: 2 },
+  { ticker: "PTCT",  sector: "XBI", tier: 2 },
 ];
 
 export const UNIVERSE: TickerMeta[] = [
