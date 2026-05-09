@@ -12,8 +12,12 @@
 
 import { fetchAll } from "./fetcher.js";
 import { getUniverseTickers } from "./universe.js";
+import { seedRegistry } from "./cache.js";
 
 async function main(): Promise<void> {
+  // Register any new tickers from universe.ts before fetching.
+  // Safe to call multiple times — INSERT OR IGNORE.
+  seedRegistry();
   const tickers = getUniverseTickers();
   console.log(
     `[fetch-tickers] ${tickers.length} tickers — cache-first, 1.1s inter-call throttle.`,
