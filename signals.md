@@ -120,3 +120,39 @@ XLP en corrección amplia — múltiples S1 simultáneos son señal de sector, n
 
 ---
 
+## 2026-W20
+
+**Run:** 2026-05-16T00:06:11.819Z
+**Escaneados:** 254 | **S2:** 1 | **S2D:** 2 | **S1:** 9
+
+### S2 PURA — ATENCIÓN (entrada limpia)
+| Ticker | Sector | T | HR% | AO | AC | Price% | Señal |
+|--------|--------|---|-----|-----|-----|--------|-------|
+| SYY | XLP | 2 | —% | -3.810 | 0.119 | 26% | 2026-05-15 |
+
+**Reddit (Xpoz):**
+- 🔥 `SYY` HIGH (25 posts) — "AI Booms &amp; Big Oil Surges: AMD targets $330 while EVs &a…"
+- 🔥 `NKE` HIGH (25 posts) — "Are we sure this isn’t a crazy buying opportunity for $NKE?"
+- 🔥 `LLY` HIGH (25 posts) — "That 12% Spike Wasn’t Random - People Just Weren’t Paying At…"
+
+### S2 DEGRADADA — POTENCIAL (movimiento adelantado)
+| Ticker | Sector | T | HR% | AO | AC | Price% | Señal |
+|--------|--------|---|-----|-----|-----|--------|-------|
+| NKE | XLY | 2 | —% | -15.436 | 0.173 | 0% | 2026-05-15 |
+| LLY | XLV | 2 | —% | -29.749 | 0.119 | 84% | 2026-05-15 |
+
+### NIVEL 1 — OBSERVACIÓN (S1)
+| Ticker | Sector | T | HR% | Price% | Señal |
+|--------|--------|---|-----|--------|-------|
+| HRL | XLP | 2 | —% | 0% | 2026-05-15 |
+| BKNG | XLY | 2 | —% | 24% | 2026-05-15 |
+| TMUS | XLC | 2 | —% | 23% | 2026-05-15 |
+| LMT | XLI | 1 | 66.7% | 41% | 2026-05-15 |
+| RTX | XLI | 2 | —% | 66% | 2026-05-15 |
+| HSY | XLP | 2 | —% | 48% | 2026-05-15 |
+| PLTR | XLK | 2 | —% | 63% | 2026-05-15 |
+| TKO | XLC | 2 | —% | 73% | 2026-05-15 |
+| VRTX | IBB | 2 | —% | 47% | 2026-05-15 |
+
+---
+
