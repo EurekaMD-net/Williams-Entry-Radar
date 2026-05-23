@@ -31,12 +31,10 @@ import type { ScanResult } from "./scanner.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const DB_PATH =
-  process.env.RADAR_DB_PATH ??
-  path.join(__dirname, "../data/radar.db");
+  process.env.RADAR_DB_PATH ?? path.join(__dirname, "../data/radar.db");
 
 const JOURNAL_REPO_PATH =
-  process.env.JOURNAL_REPO_PATH ??
-  "/root/claude/thewilliamsradar-journal";
+  process.env.JOURNAL_REPO_PATH ?? "/root/claude/thewilliamsradar-journal";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -45,8 +43,8 @@ const JOURNAL_REPO_PATH =
 export interface ScorecardEntry {
   ticker: string;
   signal: string;
-  entryRef: number;       // prev-week Thursday close (source of truth: radar.db)
-  currClose: number;      // curr-week Thursday close (source of truth: radar.db)
+  entryRef: number; // prev-week Thursday close (source of truth: radar.db)
+  currClose: number; // curr-week Thursday close (source of truth: radar.db)
   deltaPct: number;
   result: "✓" | "✗" | "—";
   notes: string;
@@ -58,8 +56,8 @@ export interface JournalData {
   year: number;
   prevWeekLabel: string;
   prevWeekNum: number;
-  runDate: string;        // last trading day in DB (the Thursday AV closes on)
-  prevBarDate: string;    // prev-week Thursday
+  runDate: string; // last trading day in DB (the Thursday AV closes on)
+  prevBarDate: string; // prev-week Thursday
   totalScanned: number;
   scorecard: ScorecardEntry[];
   catAThisWeek: ScanResult[];
@@ -84,7 +82,7 @@ function getLastBarDate(db: Database.Database, ticker: string): string | null {
 function getPrevBarDate(db: Database.Database, ticker: string): string | null {
   const rows = db
     .prepare(
-      "SELECT date FROM weekly_bars WHERE ticker = ? ORDER BY date DESC LIMIT 2"
+      "SELECT date FROM weekly_bars WHERE ticker = ? ORDER BY date DESC LIMIT 2",
     )
     .all(ticker) as { date: string }[];
   return rows.length >= 2 ? rows[1].date : null;
@@ -93,7 +91,7 @@ function getPrevBarDate(db: Database.Database, ticker: string): string | null {
 function getClose(
   db: Database.Database,
   ticker: string,
-  date: string
+  date: string,
 ): number | null {
   const row = db
     .prepare("SELECT close FROM weekly_bars WHERE ticker = ? AND date = ?")
@@ -106,7 +104,7 @@ function getClose(
 // ---------------------------------------------------------------------------
 
 function readPrevCandidates(
-  prevWeekLabel: string
+  prevWeekLabel: string,
 ): { ticker: string; signal: string }[] {
   const [yr, wPart] = prevWeekLabel.split("-W");
   const wNum = parseInt(wPart, 10);
@@ -122,7 +120,7 @@ function readPrevCandidates(
 
   // Match the Category A table — find the section and extract rows
   const catAMatch = content.match(
-    /## W\d+ Candidates[^\n]*Category A[\s\S]*?\n((?:\|[^\n]+\n)+)/
+    /## W\d+ Candidates[^\n]*Category A[\s\S]*?\n((?:\|[^\n]+\n)+)/,
   );
   if (!catAMatch) {
     console.warn(`[journal-gen] Could not find Category A table in ${mdPath}`);
@@ -131,8 +129,16 @@ function readPrevCandidates(
 
   const rows: { ticker: string; signal: string }[] = [];
   for (const line of catAMatch[1].split("\n")) {
-    if (!line.startsWith("|") || line.includes("---") || line.includes("Ticker")) continue;
-    const cols = line.split("|").map((c) => c.trim()).filter(Boolean);
+    if (
+      !line.startsWith("|") ||
+      line.includes("---") ||
+      line.includes("Ticker")
+    )
+      continue;
+    const cols = line
+      .split("|")
+      .map((c) => c.trim())
+      .filter(Boolean);
     if (cols.length >= 2) {
       const ticker = cols[0].replace(/[^A-Z]/g, "");
       const signal = cols[1].replace(/[^A-Z0-9]/g, "");
@@ -148,23 +154,35 @@ function readPrevCandidates(
 function scorecardResult(
   ticker: string,
   prevSignal: string,
-  currentResults: ScanResult[]
+  currentResults: ScanResult[],
 ): { result: ScorecardEntry["result"]; notes: string } {
   const current = currentResults.find((r) => r.ticker === ticker);
 
   if (!current) {
-    return { result: "✗", notes: "Signal lost. Ticker not in scan universe this week." };
+    return {
+      result: "✗",
+      notes: "Signal lost. Ticker not in scan universe this week.",
+    };
   }
 
   if (current.signalLevel === "none") {
     if (current.ac > 0) {
       return { result: "✗", notes: "Signal lost. AC flipped positive." };
     }
+    if (current.ranging) {
+      return {
+        result: "✗",
+        notes: "Signal lost. Ranging filter triggered (lateralization).",
+      };
+    }
     if (current.acColor === "red") {
       return { result: "✗", notes: "Signal lost. AC turned red." };
     }
     if (current.pricePercentile > 70) {
-      return { result: "✗", notes: `Signal lost. Price out of range (p${Math.round(current.pricePercentile)}%).` };
+      return {
+        result: "✗",
+        notes: `Signal lost. Price out of range (p${Math.round(current.pricePercentile)}%).`,
+      };
     }
     return { result: "✗", notes: "Signal lost. Conditions no longer met." };
   }
@@ -172,11 +190,17 @@ function scorecardResult(
   const curr = current.signalLevel;
 
   if (prevSignal === "S1" && (curr === "S2" || curr === "S2D")) {
-    return { result: "✓", notes: `Escalated to ${curr}. p${current.pricePercentile}%.` };
+    return {
+      result: "✓",
+      notes: `Escalated to ${curr}. p${current.pricePercentile}%.`,
+    };
   }
 
   const nearStr = current.nearLows ? " At structural lows." : "";
-  return { result: "—", notes: `Still ${curr}, p${current.pricePercentile}%.${nearStr} Holding.` };
+  return {
+    result: "—",
+    notes: `Still ${curr}, p${current.pricePercentile}%.${nearStr} Holding.`,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -186,7 +210,7 @@ function scorecardResult(
 export function buildJournalData(
   weekLabel: string,
   results: ScanResult[],
-  totalScanned: number
+  totalScanned: number,
 ): JournalData {
   const db = new Database(DB_PATH, { readonly: true });
 
@@ -210,7 +234,9 @@ export function buildJournalData(
     // Previous trading week: the second-most-recent distinct date in the DB.
     // Also global — not per-ticker — for the same reason.
     const distinctDates = db
-      .prepare("SELECT DISTINCT date FROM weekly_bars ORDER BY date DESC LIMIT 2")
+      .prepare(
+        "SELECT DISTINCT date FROM weekly_bars ORDER BY date DESC LIMIT 2",
+      )
       .all() as { date: string }[];
     const prevBarDate = distinctDates.length >= 2 ? distinctDates[1].date : "";
 
@@ -242,7 +268,7 @@ export function buildJournalData(
 
       if (entryRef === null || currClose === null) {
         console.warn(
-          `[journal-gen] Missing closes for ${ticker} (prev=${tickerPrevDate}, curr=${tickerCurrDate}) — skipping`
+          `[journal-gen] Missing closes for ${ticker} (prev=${tickerPrevDate}, curr=${tickerCurrDate}) — skipping`,
         );
         continue;
       }
@@ -250,7 +276,15 @@ export function buildJournalData(
       const deltaPct = ((currClose - entryRef) / entryRef) * 100;
       const { result, notes } = scorecardResult(ticker, signal, results);
 
-      scorecard.push({ ticker, signal, entryRef, currClose, deltaPct, result, notes });
+      scorecard.push({
+        ticker,
+        signal,
+        entryRef,
+        currClose,
+        deltaPct,
+        result,
+        notes,
+      });
     }
 
     const s2Pure = results.filter((r) => r.signalLevel === "S2");
@@ -258,19 +292,31 @@ export function buildJournalData(
     const s1 = results.filter((r) => r.signalLevel === "S1");
 
     const catAThisWeek = [...s2Pure, ...s2Degraded, ...s1].sort(
-      (a, b) => a.pricePercentile - b.pricePercentile
+      (a, b) => a.pricePercentile - b.pricePercentile,
     );
 
     const preRadar = results.filter(
-      (r) => r.signalLevel === "none" && r.pricePercentile <= 15
+      (r) => r.signalLevel === "none" && r.pricePercentile <= 15,
     );
 
     db.close();
 
     return {
-      weekLabel, weekNum, year, prevWeekLabel, prevWeekNum,
-      runDate, prevBarDate, totalScanned,
-      scorecard, catAThisWeek, s2Pure, s2Degraded, s1, preRadar, spyDelta,
+      weekLabel,
+      weekNum,
+      year,
+      prevWeekLabel,
+      prevWeekNum,
+      runDate,
+      prevBarDate,
+      totalScanned,
+      scorecard,
+      catAThisWeek,
+      s2Pure,
+      s2Degraded,
+      s1,
+      preRadar,
+      spyDelta,
     };
   } catch (err) {
     db.close();
@@ -292,29 +338,36 @@ function fmtPrice(n: number): string {
 }
 
 function renderScorecard(data: JournalData): string {
-  const { prevWeekNum, prevBarDate, weekNum, runDate, scorecard, spyDelta } = data;
+  const { prevWeekNum, prevBarDate, weekNum, runDate, scorecard, spyDelta } =
+    data;
   const lines: string[] = [];
 
   lines.push(`## W${prevWeekNum} Scorecard`);
   lines.push("");
-  lines.push("> 🔴 MODEL OUTPUT — Published candidates from last week. No edits. No omissions.");
+  lines.push(
+    "> 🔴 MODEL OUTPUT — Published candidates from last week. No edits. No omissions.",
+  );
   lines.push("");
   lines.push(
     `Performance of all Category A candidates named in W${prevWeekNum}. ` +
-    `Prices measured from the Thursday close of W${prevWeekNum} (${prevBarDate}) ` +
-    `to the Thursday close of W${weekNum} (${runDate}). ` +
-    `Alpha Vantage weekly bars — last bar of the trading week.`
+      `Prices measured from the Thursday close of W${prevWeekNum} (${prevBarDate}) ` +
+      `to the Thursday close of W${weekNum} (${runDate}). ` +
+      `Alpha Vantage weekly bars — last bar of the trading week.`,
   );
   lines.push("");
 
   if (scorecard.length === 0) {
     lines.push("*No Category A candidates were named in the previous week.*");
   } else {
-    lines.push(`| Ticker | Signal (W${prevWeekNum}) | Entry Reference | W${weekNum} Close | Δ% | Result | Notes |`);
-    lines.push("|--------|---------|-----------------|---------|-----|--------|-------|");
+    lines.push(
+      `| Ticker | Signal (W${prevWeekNum}) | Entry Reference | W${weekNum} Close | Δ% | Result | Notes |`,
+    );
+    lines.push(
+      "|--------|---------|-----------------|---------|-----|--------|-------|",
+    );
     for (const e of scorecard) {
       lines.push(
-        `| ${e.ticker} | ${e.signal} | ${fmtPrice(e.entryRef)} | ${fmtPrice(e.currClose)} | ${fmtPct(e.deltaPct)} | ${e.result} | ${e.notes} |`
+        `| ${e.ticker} | ${e.signal} | ${fmtPrice(e.entryRef)} | ${fmtPrice(e.currClose)} | ${fmtPct(e.deltaPct)} | ${e.result} | ${e.notes} |`,
       );
     }
     lines.push("");
@@ -323,18 +376,22 @@ function renderScorecard(data: JournalData): string {
     const lost = scorecard.filter((e) => e.result === "✗").length;
     const holding = scorecard.filter((e) => e.result === "—").length;
     const positives = scorecard.filter((e) => e.deltaPct > 0).length;
-    const avgDelta = scorecard.reduce((s, e) => s + e.deltaPct, 0) / scorecard.length;
-    const spyStr = spyDelta !== null ? `SPY W${prevWeekNum}→W${weekNum}: ${fmtPct(spyDelta)}` : "SPY: —";
+    const avgDelta =
+      scorecard.reduce((s, e) => s + e.deltaPct, 0) / scorecard.length;
+    const spyStr =
+      spyDelta !== null
+        ? `SPY W${prevWeekNum}→W${weekNum}: ${fmtPct(spyDelta)}`
+        : "SPY: —";
 
     lines.push(
       `*Result key: ✓ escalation · ✗ signal lost · — holding/no position. ` +
-      `Entry Reference = Thursday close of W${prevWeekNum} (${prevBarDate}). ` +
-      `W${weekNum} Close = Thursday ${runDate}. Source: radar.db weekly_bars.*`
+        `Entry Reference = Thursday close of W${prevWeekNum} (${prevBarDate}). ` +
+        `W${weekNum} Close = Thursday ${runDate}. Source: radar.db weekly_bars.*`,
     );
     lines.push("");
     lines.push(
       `**Scorecard summary:** ${escalated} escalated · ${lost} lost signal · ${holding} holding · ` +
-      `${positives} of ${scorecard.length} positive · Avg Δ: ${fmtPct(avgDelta)} · ${spyStr}`
+        `${positives} of ${scorecard.length} positive · Avg Δ: ${fmtPct(avgDelta)} · ${spyStr}`,
     );
   }
 
@@ -351,7 +408,7 @@ function renderCatA(data: JournalData): string {
   lines.push("");
   lines.push(
     `The ${catAThisWeek.length} tickers the model flagged as priority for W${weekNum + 1} monitoring. ` +
-    `Ordered by price percentile (lower = more depressed relative to 52-week range).`
+      `Ordered by price percentile (lower = more depressed relative to 52-week range).`,
   );
   lines.push("");
 
@@ -365,7 +422,7 @@ function renderCatA(data: JournalData): string {
       if (r.nearLows) flags.push("near lows");
       if (r.ranging) flags.push("ranging");
       lines.push(
-        `| ${r.ticker} | ${r.signalLevel} | p${r.pricePercentile}% | ${r.sector} | ${flags.join(", ")} |`
+        `| ${r.ticker} | ${r.signalLevel} | p${r.pricePercentile}% | ${r.sector} | ${flags.join(", ")} |`,
       );
     }
   }
@@ -390,17 +447,23 @@ function renderSignals(data: JournalData): string {
   if (s2Pure.length === 0) {
     lines.push("None this week.");
   } else {
-    lines.push("| Ticker | Sector | Percentile | Confirmation date | Entry consideration |");
-    lines.push("|--------|--------|------------|------------------|---------------------|");
+    lines.push(
+      "| Ticker | Sector | Percentile | Confirmation date | Entry consideration |",
+    );
+    lines.push(
+      "|--------|--------|------------|------------------|---------------------|",
+    );
     for (const r of s2Pure) {
       lines.push(
-        `| ${r.ticker} | ${r.sector} | p${r.pricePercentile}% | ${r.signalDate ?? runDate} | Review with broader context |`
+        `| ${r.ticker} | ${r.sector} | p${r.pricePercentile}% | ${r.signalDate ?? runDate} | Review with broader context |`,
       );
     }
   }
 
   lines.push("");
-  lines.push(`### S2 Degraded — ${s2Degraded.length} Ticker${s2Degraded.length !== 1 ? "s" : ""}`);
+  lines.push(
+    `### S2 Degraded — ${s2Degraded.length} Ticker${s2Degraded.length !== 1 ? "s" : ""}`,
+  );
   lines.push("");
   if (s2Degraded.length === 0) {
     lines.push("None this week.");
@@ -409,7 +472,7 @@ function renderSignals(data: JournalData): string {
     lines.push("|--------|--------|------------|-------------|");
     for (const r of s2Degraded) {
       lines.push(
-        `| ${r.ticker} | ${r.sector} | p${r.pricePercentile}% | AC crossed; AO already recovering |`
+        `| ${r.ticker} | ${r.sector} | p${r.pricePercentile}% | AC crossed; AO already recovering |`,
       );
     }
   }
@@ -427,7 +490,7 @@ function renderPreRadar(data: JournalData): string {
   lines.push("");
   lines.push(
     `${preRadar.length} tickers at structural lows (≤p15) with no active signal yet. ` +
-    `Names to watch heading into W${weekNum + 1}.`
+      `Names to watch heading into W${weekNum + 1}.`,
   );
   lines.push("");
 
@@ -446,7 +509,9 @@ function renderPreRadar(data: JournalData): string {
 
 function renderUniverse(data: JournalData): string {
   const { totalScanned, s1, s2Pure, s2Degraded } = data;
-  const nearLowsCount = [...s2Pure, ...s2Degraded, ...s1].filter((r) => r.nearLows).length;
+  const nearLowsCount = [...s2Pure, ...s2Degraded, ...s1].filter(
+    (r) => r.nearLows,
+  ).length;
 
   return [
     "## The Universe",
@@ -469,9 +534,20 @@ function renderUniverse(data: JournalData): string {
 // ---------------------------------------------------------------------------
 
 export function renderJournalPage(data: JournalData): string {
-  const { weekNum, year, s2Pure, s2Degraded, s1, runDate, totalScanned, prevWeekNum } = data;
+  const {
+    weekNum,
+    year,
+    s2Pure,
+    s2Degraded,
+    s1,
+    runDate,
+    totalScanned,
+    prevWeekNum,
+  } = data;
   const totalSignals = s2Pure.length + s2Degraded.length + s1.length;
-  const sectorSet = new Set([...s2Pure, ...s2Degraded, ...s1].map((r) => r.sector));
+  const sectorSet = new Set(
+    [...s2Pure, ...s2Degraded, ...s1].map((r) => r.sector),
+  );
 
   // Edition number = weekNum - 16 (Journal started at W17 = Edition 1)
   const editionNum = weekNum - 16;
@@ -486,12 +562,9 @@ export function renderJournalPage(data: JournalData): string {
     "",
   ].join("\n");
 
-  const header = [
-    `**Edition ${editionNum} · ${runDate}**`,
-    "",
-    "---",
-    "",
-  ].join("\n");
+  const header = [`**Edition ${editionNum} · ${runDate}**`, "", "---", ""].join(
+    "\n",
+  );
 
   const portfolioSection = [
     "## Portfolio Tracker",
@@ -516,7 +589,9 @@ export function renderJournalPage(data: JournalData): string {
   ].join("\n");
 
   const followUpRows = data.scorecard.map((e) => {
-    const current = [...s2Pure, ...s2Degraded, ...s1].find((r) => r.ticker === e.ticker);
+    const current = [...s2Pure, ...s2Degraded, ...s1].find(
+      (r) => r.ticker === e.ticker,
+    );
     const currStatus = current ? current.signalLevel : "Dropped";
     return `| ${e.ticker} | ${e.signal} | ${currStatus} | ${e.notes} |`;
   });
@@ -604,7 +679,7 @@ export function renderJournalPage(data: JournalData): string {
 export function generateJournalPage(
   weekLabel: string,
   results: ScanResult[],
-  totalScanned: number
+  totalScanned: number,
 ): string {
   const data = buildJournalData(weekLabel, results, totalScanned);
   const markdown = renderJournalPage(data);
@@ -620,7 +695,7 @@ export function generateJournalPage(
   console.log(`[journal-gen] Written: ${outPath}`);
   console.log(
     `[journal-gen] Scorecard: ${data.scorecard.length} entries | ` +
-    `Signals: S2=${data.s2Pure.length} S2D=${data.s2Degraded.length} S1=${data.s1.length}`
+      `Signals: S2=${data.s2Pure.length} S2D=${data.s2Degraded.length} S1=${data.s1.length}`,
   );
 
   return outPath;
