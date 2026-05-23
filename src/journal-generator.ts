@@ -152,8 +152,21 @@ function scorecardResult(
 ): { result: ScorecardEntry["result"]; notes: string } {
   const current = currentResults.find((r) => r.ticker === ticker);
 
-  if (!current || current.signalLevel === "none") {
-    return { result: "✗", notes: "Signal lost. AC flipped positive." };
+  if (!current) {
+    return { result: "✗", notes: "Signal lost. Ticker not in scan universe this week." };
+  }
+
+  if (current.signalLevel === "none") {
+    if (current.ac > 0) {
+      return { result: "✗", notes: "Signal lost. AC flipped positive." };
+    }
+    if (current.acColor === "red") {
+      return { result: "✗", notes: "Signal lost. AC turned red." };
+    }
+    if (current.pricePercentile > 70) {
+      return { result: "✗", notes: `Signal lost. Price out of range (p${Math.round(current.pricePercentile)}%).` };
+    }
+    return { result: "✗", notes: "Signal lost. Conditions no longer met." };
   }
 
   const curr = current.signalLevel;
