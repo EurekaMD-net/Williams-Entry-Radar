@@ -156,3 +156,31 @@ XLP en corrección amplia — múltiples S1 simultáneos son señal de sector, n
 
 ---
 
+## 2026-W21
+
+**Run:** 2026-05-23T00:05:57.433Z
+**Escaneados:** 254 | **S2:** 0 | **S2D:** 1 | **S1:** 12
+
+### S2 DEGRADADA — POTENCIAL (movimiento adelantado)
+| Ticker | Sector | T | HR% | AO | AC | Price% | Señal |
+|--------|--------|---|-----|-----|-----|--------|-------|
+| PLTR | XLK | 2 | —% | -21.846 | 0.157 | 64% | 2026-05-22 |
+
+### NIVEL 1 — OBSERVACIÓN (S1)
+| Ticker | Sector | T | HR% | Price% | Señal |
+|--------|--------|---|-----|--------|-------|
+| CLX | XLP | 2 | —% | 11% | 2026-05-22 |
+| ABT | XLV | 2 | —% | 6% | 2026-05-22 |
+| BSX | XLV | 2 | —% | 9% | 2026-05-22 |
+| MOS | XLB | 2 | —% | 7% | 2026-05-22 |
+| TMUS | XLC | 2 | —% | 22% | 2026-05-22 |
+| LMT | XLI | 1 | 66.7% | 47% | 2026-05-22 |
+| NOC | XLI | 2 | —% | 42% | 2026-05-22 |
+| RTX | XLI | 2 | —% | 72% | 2026-05-22 |
+| HSY | XLP | 2 | —% | 57% | 2026-05-22 |
+| BKNG | XLY | 2 | —% | 31% | 2026-05-22 |
+| IBM | XLK | 2 | —% | 65% | 2026-05-22 |
+| T | XLC | 2 | —% | 72% | 2026-05-22 |
+
+---
+
