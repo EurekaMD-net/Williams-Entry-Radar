@@ -146,7 +146,7 @@ SQLite-backed scanner that runs weekly, fetches current data, detects active S1/
 ```
 delivery preflight (Telegram getMe/getChat + GitHub /user — warn on broken)
   ↓
-Universe (159 tickers across 8 sectors, 2 tiers)
+Universe (388 tickers across 13 sectors, 2 tiers; ~254 active per week post-ranging filter)
   ↓
 fetch (AV Premium, sequential 1.1s delay, ~3 min cold cache for full universe)
   ↓
@@ -176,37 +176,37 @@ scan. Xpoz enrichment routes through the local `xpoz-pipeline` service
 
 Universe expanded from 77 → 157 tickers by adding XLF, XLV, XLB, XLY (80 new tickers, Tier 2, backtested W17-2026).
 
-| Type | Count | Notes |
-|------|-------|-------|
-| S2 Pure | 0 | No clean confirmations |
-| S2 Degraded | 11 | AO already recovering — late entry |
-| S1 Observation | 21 | Start watching |
-| Tickers in lows (< p15%) | 9 | Unusual concentration |
+| Type                     | Count | Notes                              |
+| ------------------------ | ----- | ---------------------------------- |
+| S2 Pure                  | 0     | No clean confirmations             |
+| S2 Degraded              | 11    | AO already recovering — late entry |
+| S1 Observation           | 21    | Start watching                     |
+| Tickers in lows (< p15%) | 9     | Unusual concentration              |
 
 **Top signals by quality:**
 
-| Ticker | Sector | Type | Tier | HR | Percentile | Note |
-|--------|--------|------|------|----|-----------|------|
-| **PG** | XLP | S1 | **1** | **65.4%** | p15% | Only Tier 1 active |
-| BSX | XLV | S1 | 2 | — | **p1%** | Absolute lows |
-| NKE | XLY | S1 | 2 | — | p4% | Structural lows |
-| CLX | XLP | S1 | 2 | — | p3% | |
-| GIS | XLP | S1 | 2 | — | p0% | Minimum absolute |
-| SYK | XLV | S1 | 2 | — | p7% | |
-| RPM | XLB | S2D | 2 | — | p29% | |
+| Ticker | Sector | Type | Tier  | HR        | Percentile | Note               |
+| ------ | ------ | ---- | ----- | --------- | ---------- | ------------------ |
+| **PG** | XLP    | S1   | **1** | **65.4%** | p15%       | Only Tier 1 active |
+| BSX    | XLV    | S1   | 2     | —         | **p1%**    | Absolute lows      |
+| NKE    | XLY    | S1   | 2     | —         | p4%        | Structural lows    |
+| CLX    | XLP    | S1   | 2     | —         | p3%        |                    |
+| GIS    | XLP    | S1   | 2     | —         | p0%        | Minimum absolute   |
+| SYK    | XLV    | S1   | 2     | —         | p7%        |                    |
+| RPM    | XLB    | S2D  | 2     | —         | p29%       |                    |
 
 **Sector summary:**
 
-| Sector | Signals | Type | Notes |
-|--------|---------|------|-------|
-| XLY (new) | 7 | 4×S2D + 3×S1 | Most active — HD, NKE, TSLA |
-| XLV (new) | 5 | S1 | Healthcare at lows: BSX p1%, SYK p7% |
-| XLB (new) | 6 | 4×S2D + 2×S1 | RPM S2D at lows, MOS S1 p9% |
-| XLP | 5 | S1 | PG T1, GIS p0%, HRL p9% |
-| XLI | 4 | 2×S2D + 2×S1 | BA, EMR in S2D |
-| XLU | 1 | S2D | NRG |
-| XLF (new) | 0 | — | No signals |
-| XLE | 0 | — | No signals |
+| Sector    | Signals | Type         | Notes                                |
+| --------- | ------- | ------------ | ------------------------------------ |
+| XLY (new) | 7       | 4×S2D + 3×S1 | Most active — HD, NKE, TSLA          |
+| XLV (new) | 5       | S1           | Healthcare at lows: BSX p1%, SYK p7% |
+| XLB (new) | 6       | 4×S2D + 2×S1 | RPM S2D at lows, MOS S1 p9%          |
+| XLP       | 5       | S1           | PG T1, GIS p0%, HRL p9%              |
+| XLI       | 4       | 2×S2D + 2×S1 | BA, EMR in S2D                       |
+| XLU       | 1       | S2D          | NRG                                  |
+| XLF (new) | 0       | —            | No signals                           |
+| XLE       | 0       | —            | No signals                           |
 
 9 tickers simultaneously at percentile < 15% is unusual — broad correction still in early phase. 0 S2 pure = no confirmed reversals. S1s are observation, not action.
 
@@ -220,7 +220,7 @@ cp .env.example .env
 # Install
 npm install
 
-# Run full radar (all 159 tickers across 8 sectors)
+# Run full radar (all 388 tickers across 13 sectors)
 AV_API_KEY=your_key tsx src/radar.ts
 
 # Operator-driven fetch only (cache-first, populates new tickers
