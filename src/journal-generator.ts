@@ -525,7 +525,7 @@ function renderUniverse(data: JournalData): string {
     `- S1 active: ${s1.length}`,
     `- S2 degraded: ${s2Degraded.length}`,
     `- S2 pure: ${s2Pure.length}`,
-    `- Tickers at structural lows (≤p15): ${nearLowsCount}`,
+    `- Tickers at structural lows (≤p30): ${nearLowsCount}`,
   ].join("\n");
 }
 
