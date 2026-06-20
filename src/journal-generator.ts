@@ -405,10 +405,10 @@ function renderSignalExitAnalysis(data: JournalData): string {
   if (exits.length === 0) return "";
 
   const lines: string[] = [];
-  lines.push(`## Signal Exit Analysis — W${prevWeekNum} Exits`);
+  lines.push(`## Análisis de Salidas — Señales W${prevWeekNum}`);
   lines.push("");
   lines.push(
-    `> 🔴 MODEL OUTPUT — Did the ${exits.length} names that lost signal exit on real appreciation or noise?`,
+    `> 🔴 ANÁLISIS — ¿Los ${exits.length} nombres que perdieron señal salieron por apreciación real o por ruido?`,
   );
   lines.push("");
 
@@ -431,8 +431,8 @@ function renderSignalExitAnalysis(data: JournalData): string {
     return { verdict: "false_technical", label: "❌ Falsa señal técnica — AC técnico, precio bajó" };
   }
 
-  lines.push(`| Ticker | Δ% | Exit Reason | Verdict |`);
-  lines.push(`|--------|----|-------------|---------|`);
+  lines.push(`| Ticker | Δ% | Razón de salida | Veredicto |`);
+  lines.push(`|--------|----|-----------------|-----------|`);
 
   const sorted = [...exits].sort((a, b) => b.deltaPct - a.deltaPct);
   const counts = { real: 0, range: 0, false_technical: 0, collapse: 0 };
@@ -441,10 +441,10 @@ function renderSignalExitAnalysis(data: JournalData): string {
     const { verdict, label } = classify(e);
     counts[verdict]++;
     const reason = e.notes.includes("AC turned red")
-      ? "AC turned red"
+      ? "AC giró negativo"
       : e.notes.includes("Ranging filter")
-        ? "Ranging filter"
-        : "AC flipped positive";
+        ? "Filtro de lateralización"
+        : "AC cruzó positivo";
     lines.push(`| **${e.ticker}** | ${fmtPct(e.deltaPct)} | ${reason} | ${label} |`);
   }
 
@@ -456,14 +456,14 @@ function renderSignalExitAnalysis(data: JournalData): string {
   const noisePct = Math.round(((counts.false_technical + counts.collapse) / total) * 100);
 
   lines.push(
-    `**Breakdown: ${counts.real} real (${realPct}%) · ${counts.range} rango (${rangePct}%) · ${counts.false_technical + counts.collapse} sin soporte de precio o deterioro (${noisePct}%)**`,
+    `**Resumen: ${counts.real} apreciación real (${realPct}%) · ${counts.range} rango (${rangePct}%) · ${counts.false_technical + counts.collapse} sin soporte de precio o deterioro (${noisePct}%)**`,
   );
   lines.push("");
 
   const worst = sorted[sorted.length - 1];
   if (worst && worst.deltaPct < -4) {
     lines.push(
-      `Notable: **${worst.ticker}** (${fmtPct(worst.deltaPct)}) exited not because the setup resolved — it exited because the deterioration deepened. Worth monitoring in W${weekNum} as a potential negative-momentum continuation.`,
+      `Notable: **${worst.ticker}** (${fmtPct(worst.deltaPct)}) no perdió la señal porque el setup resolvió — la perdió porque el deterioro se profundizó. Vale la pena monitorear en W${weekNum} como continuación de momentum negativo.`,
     );
     lines.push("");
   }
