@@ -398,6 +398,79 @@ function renderScorecard(data: JournalData): string {
   return lines.join("\n");
 }
 
+function renderSignalExitAnalysis(data: JournalData): string {
+  const { prevWeekNum, weekNum, scorecard } = data;
+
+  const exits = scorecard.filter((e) => e.result === "✗");
+  if (exits.length === 0) return "";
+
+  const lines: string[] = [];
+  lines.push(`## Signal Exit Analysis — W${prevWeekNum} Exits`);
+  lines.push("");
+  lines.push(
+    `> 🔴 MODEL OUTPUT — Did the ${exits.length} names that lost signal exit on real appreciation or noise?`,
+  );
+  lines.push("");
+
+  type ExitVerdict = "real" | "range" | "false_technical" | "collapse";
+  function classify(e: ScorecardEntry): {
+    verdict: ExitVerdict;
+    label: string;
+  } {
+    const d = e.deltaPct;
+    const notes = e.notes.toLowerCase();
+    if (notes.includes("ac turned red") || d <= -5)
+      return { verdict: "collapse", label: "🔴 Colapso — deterioro, no resolución" };
+    if (notes.includes("ranging filter"))
+      return d < 0
+        ? { verdict: "collapse", label: "❌ Deterioro — lateralización con caída" }
+        : { verdict: "range", label: "⚠️ Rango — lateralización confirmada por filtro" };
+    if (d >= 4) return { verdict: "real", label: "✅ Apreciación real" };
+    if (d >= 0 && d < 4)
+      return { verdict: "range", label: "⚠️ Rango — movimiento sin convicción" };
+    return { verdict: "false_technical", label: "❌ Falsa señal técnica — AC técnico, precio bajó" };
+  }
+
+  lines.push(`| Ticker | Δ% | Exit Reason | Verdict |`);
+  lines.push(`|--------|----|-------------|---------|`);
+
+  const sorted = [...exits].sort((a, b) => b.deltaPct - a.deltaPct);
+  const counts = { real: 0, range: 0, false_technical: 0, collapse: 0 };
+
+  for (const e of sorted) {
+    const { verdict, label } = classify(e);
+    counts[verdict]++;
+    const reason = e.notes.includes("AC turned red")
+      ? "AC turned red"
+      : e.notes.includes("Ranging filter")
+        ? "Ranging filter"
+        : "AC flipped positive";
+    lines.push(`| **${e.ticker}** | ${fmtPct(e.deltaPct)} | ${reason} | ${label} |`);
+  }
+
+  lines.push("");
+
+  const total = exits.length;
+  const realPct = Math.round((counts.real / total) * 100);
+  const rangePct = Math.round((counts.range / total) * 100);
+  const noisePct = Math.round(((counts.false_technical + counts.collapse) / total) * 100);
+
+  lines.push(
+    `**Breakdown: ${counts.real} real (${realPct}%) · ${counts.range} rango (${rangePct}%) · ${counts.false_technical + counts.collapse} sin soporte de precio o deterioro (${noisePct}%)**`,
+  );
+  lines.push("");
+
+  const worst = sorted[sorted.length - 1];
+  if (worst && worst.deltaPct < -4) {
+    lines.push(
+      `Notable: **${worst.ticker}** (${fmtPct(worst.deltaPct)}) exited not because the setup resolved — it exited because the deterioration deepened. Worth monitoring in W${weekNum} as a potential negative-momentum continuation.`,
+    );
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
 function renderCatA(data: JournalData): string {
   const { weekNum, catAThisWeek } = data;
   const lines: string[] = [];
@@ -628,6 +701,10 @@ export function renderJournalPage(data: JournalData): string {
     frontmatter,
     header,
     renderScorecard(data),
+    "",
+    "---",
+    "",
+    renderSignalExitAnalysis(data),
     "",
     "---",
     "",
