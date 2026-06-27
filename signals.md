@@ -410,3 +410,65 @@ XLP en corrección amplia — múltiples S1 simultáneos son señal de sector, n
 
 ---
 
+## 2026-W26
+
+**Run:** 2026-06-27T00:11:05.332Z
+**Escaneados:** 388 | **S2:** 1 | **S2D:** 11 | **S1:** 17
+
+### S2 PURA — ATENCIÓN (entrada limpia)
+| Ticker | Sector | T | HR% | AO | AC | Price% | Señal |
+|--------|--------|---|-----|-----|-----|--------|-------|
+| CMG | XLY | 2 | —% | -3.104 | 0.012 | 11% | 2026-06-26 |
+
+**Reddit (Xpoz):**
+- 🔥 `CMG` HIGH (25 posts) — "������ Top Gainers &amp; Losers to Watch | Feb 04 (Wed)"
+- 🔥 `ZTS` HIGH (25 posts) — "ZOETIS (ZTS)"
+- 🔥 `VKTX` HIGH (25 posts) — "These are the Gappers Watchlist for 1/14������"
+- 🔥 `NRG` HIGH (25 posts) — "VCT 2026 — Masters Santiago / Playoffs — Day 4 / Live Discus…"
+- 🔥 `PH` HIGH (25 posts) — "Cleaning rates"
+- 🔥 `IR` HIGH (25 posts) — "KIBERNETINIO SAUGUMO RADAR - 2026-06-21"
+- 🔥 `MTD` HIGH (25 posts) — "Final declarations are replacing self-assessment in 2026 - h…"
+- 🔥 `MLM` HIGH (25 posts) — "[Seeking] Operations Manager / Program Manager / Program Coo…"
+- 🔥 `EXPE` HIGH (25 posts) — "Understanding the Structural Tightness of This Float"
+- 🔥 `CBRE` HIGH (25 posts) — "These 13 stocks could surge on upbeat results this earnings …"
+- 🔥 `XNCR` HIGH (25 posts) — "EverHint – Momentum Swing — Breakout Standard for Apr 08, 20…"
+- 🔥 `ACAD` HIGH (25 posts) — "Unraveling the lek paradox - why sexual selection does not d…"
+
+### S2 DEGRADADA — POTENCIAL (movimiento adelantado)
+| Ticker | Sector | T | HR% | AO | AC | Price% | Señal |
+|--------|--------|---|-----|-----|-----|--------|-------|
+| ZTS | XLV | 2 | —% | -33.729 | 1.107 | 2% | 2026-06-26 |
+| VKTX | XBI | 2 | —% | -2.145 | 0.680 | 28% | 2026-06-26 |
+| NRG | XLU | 2 | —% | -19.658 | 1.110 | 73% | 2026-06-26 |
+| PH | XLI | 2 | —% | -12.551 | 14.138 | 90% | 2026-06-26 |
+| IR | XLI | 2 | —% | -7.324 | 1.439 | 34% | 2026-06-26 |
+| MTD | XLV | 2 | —% | -152.592 | 30.974 | 54% | 2026-06-26 |
+| MLM | XLB | 2 | —% | -31.152 | 12.177 | 69% | 2026-06-26 |
+| EXPE | XLY | 2 | —% | -14.179 | 4.591 | 82% | 2026-06-26 |
+| CBRE | XLRE | 2 | —% | -16.693 | 0.123 | 59% | 2026-06-26 |
+| XNCR | IBB | 2 | —% | -0.914 | 0.492 | 43% | 2026-06-26 |
+| ACAD | XBI | 2 | —% | -1.500 | 0.343 | 83% | 2026-06-26 |
+
+### NIVEL 1 — OBSERVACIÓN (S1)
+| Ticker | Sector | T | HR% | Price% | Señal |
+|--------|--------|---|-----|--------|-------|
+| STZ | XLP | 2 | —% | 17% | 2026-06-26 |
+| ISRG | XLV | 2 | —% | 0% | 2026-06-26 |
+| LOW | XLY | 2 | —% | 21% | 2026-06-26 |
+| AZO | XLY | 2 | —% | 21% | 2026-06-26 |
+| CMCSA | XLC | 2 | —% | 5% | 2026-06-26 |
+| CHTR | XLC | 2 | —% | 2% | 2026-06-26 |
+| ZG | XLC | 2 | —% | 0% | 2026-06-26 |
+| REGN | IBB | 2 | —% | 21% | 2026-06-26 |
+| INSM | IBB | 2 | —% | 27% | 2026-06-26 |
+| SMMT | XBI | 2 | —% | 27% | 2026-06-26 |
+| SRPT | XBI | 2 | —% | 4% | 2026-06-26 |
+| SR | XLU | 2 | —% | 67% | 2026-06-26 |
+| BALL | XLB | 2 | —% | 75% | 2026-06-26 |
+| LVS | XLY | 2 | —% | 44% | 2026-06-26 |
+| ONC | IBB | 2 | —% | 61% | 2026-06-26 |
+| BBIO | IBB | 2 | —% | 85% | 2026-06-26 |
+| PCVX | XBI | 2 | —% | 31% | 2026-06-26 |
+
+---
+
