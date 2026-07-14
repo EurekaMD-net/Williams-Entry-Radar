@@ -13,7 +13,8 @@
  *   9. checkStaleSignals() — log tickers approaching 20w discard threshold
  *
  * Env vars:
- *   AV_API_KEY           — Alpha Vantage
+ *   POLYGON_API_KEY      — Polygon (primary weekly data source since 2026-07-14)
+ *   AV_API_KEY           — Alpha Vantage (free-tier fallback, 25 req/day)
  *   TELEGRAM_BOT_TOKEN   — Telegram bot
  *   TELEGRAM_CHAT_ID     — Telegram chat
  *   GH_TOKEN             — GitHub personal access token

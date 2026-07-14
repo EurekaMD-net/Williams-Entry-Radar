@@ -2,12 +2,13 @@
  * fetch-tickers.ts — one-shot fetch of every ticker in the universe.
  *
  * Cache-first: tickers already in the SQLite weekly_bars cache are skipped
- * (no API call). Only missing or stale entries hit Alpha Vantage. Existing
- * 1.1s throttle in fetchAll() keeps us safely under AV's premium 75 req/min.
+ * (no API call). Only missing or stale entries hit Polygon (primary since
+ * the 2026-07-14 AV free-tier downgrade; AV is fallback-only). The 13s
+ * throttle in fetchAll() keeps us under Polygon's free 5 req/min.
  *
  * Operator-triggered after a universe-expansion PR merges, so new tickers
  * have data before the next scheduled scan. Invoked via scripts/fetch.sh
- * which sources /etc/williams-radar.env (where AV_API_KEY lives).
+ * which sources /etc/williams-radar.env (POLYGON_API_KEY + AV_API_KEY).
  */
 
 import { fetchAll } from "./fetcher.js";
@@ -20,7 +21,7 @@ async function main(): Promise<void> {
   seedRegistry();
   const tickers = getUniverseTickers();
   console.log(
-    `[fetch-tickers] ${tickers.length} tickers — cache-first, 1.1s inter-call throttle.`,
+    `[fetch-tickers] ${tickers.length} tickers — cache-first, 13s inter-call throttle (Polygon free tier).`,
   );
 
   // Track which tickers were attempted from the API vs served from cache.
