@@ -18,6 +18,8 @@ To populate weekly OHLC bars for the universe (e.g. after a universe-expansion P
 
 `scripts/tfm/fetch-reference.ts` + `scripts/tfm/make-splitbasis-db.py` (2026-08-16) build a **backtest copy** of radar.db on Polygon's split-only basis using the free-tier reference endpoints (dividends/splits, full history) — production radar.db is only ever opened read-only by them. Known data facts they encode: AV-era rows carry an adjusted close but RAW open/high/low; the AV↔Polygon basis seam is 2024-07-19; spin-off distributions are not in the dividend feed, so ~15% of AV rows (35 tickers inside 2017+) stay unreconcilable and are excluded via `clean_from`.
 
+**TimesFM was DISCARDED from the Radar on 2026-08-16** (gate FAIL ×3 + no improvement over a σ52 band; `docs/timesfm-fase1-spec.md` §10). `scripts/tfm/` remains only as the archived backtest harness (`signal-weeks.ts` → `forecast.py` → `backtest.py`, plus `retest-sigma52.py` for the stronger-baseline re-test) — every script opens radar.db read-only; nothing is wired, no unit or timer exists. `scripts/sigma52-band.ts --week <ISO-week>` is a model-free one-shot that prints the 4-week 80% price band (52-week σ random walk) for the week's S1/S2D/S2 signals — read-only, stdout only, annotation not signal. `/opt/timesfm` (~1.7 GB) is unused by this repo.
+
 You should not need to edit `fetcher.ts`, `cache.ts`, `db.ts`, `scheduler.ts`, or any other signal-pipeline file to make this work. If `fetch.sh` fails, **stop and report** — do not "fix" by editing pipeline code, and do not "work around it" by invoking the underlying TS entry point directly.
 
 ## Scope of authorized changes
