@@ -45,6 +45,9 @@ def test_load_closes_truncates_at_as_of_and_respects_context(tmp_path):
     assert closes[-1] == 100.0 and dates[-1] == "2021-11-26"
     dates, closes = fc.load_closes(conn, "AAA", "2021-11-26", 64)
     assert len(closes) == 64 and closes[0] == 37.0 and closes[-1] == 100.0
+    # from_date lower bound: bar 91 is 2020-01-03 + 90*7d = 2021-09-24
+    dates, closes = fc.load_closes(conn, "AAA", "2021-11-26", 512, from_date="2021-09-24")
+    assert len(closes) == 10 and dates[0] == "2021-09-24" and closes[-1] == 100.0
 
 
 def test_open_db_is_read_only(tmp_path):

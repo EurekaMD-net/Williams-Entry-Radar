@@ -47,19 +47,21 @@ def open_db(path: str) -> sqlite3.Connection:
     return sqlite3.connect(f"file:{path}?mode=ro", uri=True)
 
 
-def load_closes(conn: sqlite3.Connection, ticker: str, as_of: str | None, context: int) -> tuple[list[str], np.ndarray]:
-    """Last `context` closes for `ticker` with date <= as_of (or all), ascending."""
+def load_closes(
+    conn: sqlite3.Connection, ticker: str, as_of: str | None, context: int, from_date: str | None = None
+) -> tuple[list[str], np.ndarray]:
+    """Last `context` closes for `ticker` with from_date <= date <= as_of, ascending."""
+    sql = "SELECT date, close FROM weekly_bars WHERE ticker=?"
+    params: list = [ticker]
     if as_of:
-        cur = conn.execute(
-            "SELECT date, close FROM weekly_bars WHERE ticker=? AND date<=? ORDER BY date DESC LIMIT ?",
-            (ticker, as_of, context),
-        )
-    else:
-        cur = conn.execute(
-            "SELECT date, close FROM weekly_bars WHERE ticker=? ORDER BY date DESC LIMIT ?",
-            (ticker, context),
-        )
-    rows = cur.fetchall()[::-1]
+        sql += " AND date<=?"
+        params.append(as_of)
+    if from_date:
+        sql += " AND date>=?"
+        params.append(from_date)
+    sql += " ORDER BY date DESC LIMIT ?"
+    params.append(context)
+    rows = conn.execute(sql, params).fetchall()[::-1]
     return [r[0] for r in rows], np.asarray([r[1] for r in rows], dtype=np.float64)
 
 
@@ -132,7 +134,9 @@ def build_row(ticker: str, as_of: str, dates: list[str], closes: np.ndarray, q: 
     }
 
 
-def forecast_rows(model, conn: sqlite3.Connection, rows: list[dict], horizon: int, context: int) -> list[dict]:
+def forecast_rows(
+    model, conn: sqlite3.Connection, rows: list[dict], horizon: int, context: int, from_date: str | None = None
+) -> list[dict]:
     """Forecast every {ticker, as_of?} row in batches of BATCH. Per-row failures become error rows."""
     out: list[dict] = []
     pending: list[tuple[dict, list[str], np.ndarray]] = []
@@ -161,7 +165,7 @@ def forecast_rows(model, conn: sqlite3.Connection, rows: list[dict], horizon: in
 
     for row in rows:
         ticker, as_of = row["ticker"], row.get("as_of")
-        dates, closes = load_closes(conn, ticker, as_of, context)
+        dates, closes = load_closes(conn, ticker, as_of, context, from_date)
         if len(closes) < MIN_BARS:
             out.append({"ticker": ticker, "as_of": as_of, "error": f"only {len(closes)} bars (<{MIN_BARS})"})
             continue
@@ -185,6 +189,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--horizon", type=int, default=4)
     p.add_argument("--context", type=int, default=512)
     p.add_argument("--limit", type=int, default=0, help="only the first N rows (timing runs)")
+    p.add_argument("--from-date", dest="from_date", help="ignore bars before this date (e.g. 2024-07-19 = Polygon-basis only)")
     src = p.add_mutually_exclusive_group(required=True)
     src.add_argument("--tickers", help="comma-separated tickers, forecast from the last bar (or --as-of)")
     src.add_argument("--rows", help="JSON with {rows:[{ticker, as_of}]} or a bare list (backtest mode)")
@@ -229,7 +234,7 @@ def main(argv: list[str]) -> int:
         log(f"model load failed: {e}")
         return 1
 
-    results = forecast_rows(model, conn, rows, args.horizon, args.context)
+    results = forecast_rows(model, conn, rows, args.horizon, args.context, args.from_date)
     n_ok = sum(1 for r in results if "error" not in r)
     payload = {
         "meta": {
@@ -237,6 +242,7 @@ def main(argv: list[str]) -> int:
             "lib": LIB,
             "horizon": args.horizon,
             "context": args.context,
+            "from_date": args.from_date,
             "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "n_rows": len(results),
             "n_ok": n_ok,
