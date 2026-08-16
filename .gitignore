@@ -12,3 +12,9 @@ dist/
 # vitest coverage / caches
 coverage/
 .vitest/
+
+# TimesFM Fase 1 backtest artefacts (large; report.md stays tracked)
+results/tfm-backtest/**/*.json
+results/tfm-backtest/**/*.csv
+__pycache__/
+.pytest_cache/
