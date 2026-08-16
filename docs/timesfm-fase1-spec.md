@@ -251,3 +251,14 @@ No variant improves on σ52 on either population → **NO IMPROVEMENT → TimesF
 - Nothing was ever wired: no unit, no timer, no Journal/Telegram change, `src/` untouched, `data/radar.db` read-only throughout.
 
 **If TimesFM is ever re-opened for the Radar**, only two routes are worth a session, both gated by §5 with σ52 (not σ26) as the baseline: fine-tune on the Radar's signal-weeks with a strict time split (train ≤ 2023 / test 2024+), or a different target with real temporal structure (volatility itself vs HAR/EWMA, or non-price series). Zero-shot price re-tests (other horizons/frequencies/covariates) are closed by the 3-strike rule.
+
+**Where TimesFM's value lies — cases for the future (recorded 2026-08-16, operator Q&A).** It is a zero-shot, univariate, probabilistic forecaster whose published strength is series with temporal structure (seasonality, trend, level shifts, calendar effects). Its value is operational — one call instead of a fitted model per series, cold-start over hundreds of series, calibrated bands out of the box — not accuracy on a target whose own history carries no information. Ranked for this VPS's portfolio, every one gated as in §5 against the *strongest* cheap baseline before wiring:
+
+1. **Anomaly / drift bands on operational series** (cheapest, useful either way): mc-prometheus metrics, Jarvis spend per hour/day, xpoz mention volumes (spike detection), WA message volumes per group, mail volumes, disk growth. Baseline EWMA / Holt-Winters; win = one calibrated band per series instead of hand thresholds. Suggested first probe.
+2. **FSD delivery + pacing curves** (highest business value): audience delivery per program/daypart, sell-through, cumulative pacing vs guarantee — the by-week enforcement needs a forward band. Baseline seasonal-naive / same-week-last-year / ETS; exogenous programming/sports events need covariates.
+3. **Cold-start forecasts across many small series** (per-salon appointment demand, per-advertiser spend seasonality) — value from breadth; series under ~50 points stay unreliable.
+4. **Volatility as a target** vs HAR/EWMA — plausible win, low utility (a σ52 band already serves the Radar).
+5. **Fine-tuning** on a signal-conditional population with a strict time split — the only route to a Radar edge; low odds; only with a concrete question.
+
+Closed: prices/returns at any horizon or frequency (3-strike), anything a one-line formula gives, cross-sectional questions (ranking tickers/advertisers), series driven by discrete external decisions. The harness in `scripts/tfm/` is target-agnostic (swap the loader + baseline); runtime `/opt/timesfm` handles thousands of series per hour on CPU.
+
