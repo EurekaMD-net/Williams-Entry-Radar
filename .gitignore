@@ -18,3 +18,7 @@ results/tfm-backtest/**/*.json
 results/tfm-backtest/**/*.csv
 __pycache__/
 .pytest_cache/
+results/tfm-backtest/**/*.db
+results/tfm-backtest/**/*.db-*
+!results/tfm-backtest/reference/*.json
+!results/tfm-backtest/radar-splitbasis-summary.json

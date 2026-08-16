@@ -178,7 +178,7 @@ function main(): number {
     out,
     JSON.stringify(
       {
-        meta: { since, horizon, cap, generated_at: new Date().toISOString(), tickers: tickers.length, total_before_cap: all.length, post_2025_before_cap: recent, post_2025: recentCapped, recent_cutoff: RECENT_CUTOFF },
+        meta: { db: path.resolve(dbPath), since, horizon, cap, generated_at: new Date().toISOString(), tickers: tickers.length, total_before_cap: all.length, post_2025_before_cap: recent, post_2025: recentCapped, recent_cutoff: RECENT_CUTOFF },
         rows,
       },
       null,

@@ -1,0 +1,36 @@
+{
+ "since": "2026-04-01",
+ "fetched_at": "2026-08-16T17:47:56.566Z",
+ "splits": [
+  {
+   "ticker": "BKNG",
+   "execution_date": "2026-04-06",
+   "split_from": 1,
+   "split_to": 25
+  },
+  {
+   "ticker": "KLAC",
+   "execution_date": "2026-06-12",
+   "split_from": 1,
+   "split_to": 10
+  },
+  {
+   "ticker": "DD",
+   "execution_date": "2026-06-24",
+   "split_from": 3,
+   "split_to": 1
+  },
+  {
+   "ticker": "MNST",
+   "execution_date": "2026-08-11",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "APH",
+   "execution_date": "2026-09-03",
+   "split_from": 1,
+   "split_to": 2
+  }
+ ]
+}

@@ -1,0 +1,1471 @@
+{
+ "since": "1990-01-01",
+ "until": "2026-08-16",
+ "fetched_at": "2026-08-16T19:50:23.641Z",
+ "splits": [
+  {
+   "ticker": "INTC",
+   "execution_date": "1993-06-07",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "MU",
+   "execution_date": "1994-04-19",
+   "split_from": 2,
+   "split_to": 5
+  },
+  {
+   "ticker": "MU",
+   "execution_date": "1995-05-23",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "INTC",
+   "execution_date": "1995-06-19",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "INTC",
+   "execution_date": "1997-07-14",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "INTC",
+   "execution_date": "1999-04-12",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "MU",
+   "execution_date": "2000-05-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "AAPL",
+   "execution_date": "2000-06-21",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "INTC",
+   "execution_date": "2000-07-31",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "AMD",
+   "execution_date": "2000-08-21",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "MSFT",
+   "execution_date": "2003-02-18",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "LEN",
+   "execution_date": "2003-04-22",
+   "split_from": 10,
+   "split_to": 11
+  },
+  {
+   "ticker": "ECL",
+   "execution_date": "2003-06-09",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "BKNG",
+   "execution_date": "2003-06-16",
+   "split_from": 6,
+   "split_to": 1
+  },
+  {
+   "ticker": "UNH",
+   "execution_date": "2003-06-19",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "ISRG",
+   "execution_date": "2003-07-01",
+   "split_from": 2,
+   "split_to": 1
+  },
+  {
+   "ticker": "SNPS",
+   "execution_date": "2003-09-24",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "MMM",
+   "execution_date": "2003-09-30",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "EA",
+   "execution_date": "2003-11-18",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "ROST",
+   "execution_date": "2003-12-19",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "PHM",
+   "execution_date": "2004-01-05",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "DHI",
+   "execution_date": "2004-01-13",
+   "split_from": 2,
+   "split_to": 3
+  },
+  {
+   "ticker": "APA",
+   "execution_date": "2004-01-15",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "LEN",
+   "execution_date": "2004-01-21",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NFLX",
+   "execution_date": "2004-02-12",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "ETN",
+   "execution_date": "2004-02-24",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "AME",
+   "execution_date": "2004-03-01",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "APLS",
+   "execution_date": "2004-03-19",
+   "split_from": 200,
+   "split_to": 1
+  },
+  {
+   "ticker": "APH",
+   "execution_date": "2004-03-30",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "SYK",
+   "execution_date": "2004-05-17",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "DVA",
+   "execution_date": "2004-06-16",
+   "split_from": 2,
+   "split_to": 3
+  },
+  {
+   "ticker": "HSY",
+   "execution_date": "2004-06-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "PG",
+   "execution_date": "2004-06-21",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NOC",
+   "execution_date": "2004-06-22",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "VLO",
+   "execution_date": "2004-08-09",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "BALL",
+   "execution_date": "2004-08-24",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "BAC",
+   "execution_date": "2004-08-30",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CHD",
+   "execution_date": "2004-09-02",
+   "split_from": 2,
+   "split_to": 3
+  },
+  {
+   "ticker": "GILD",
+   "execution_date": "2004-09-07",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CVX",
+   "execution_date": "2004-09-13",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NUE",
+   "execution_date": "2004-10-18",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "DVN",
+   "execution_date": "2004-11-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "O",
+   "execution_date": "2005-01-03",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "AAPL",
+   "execution_date": "2005-02-28",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "HSIC",
+   "execution_date": "2005-03-01",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "EOG",
+   "execution_date": "2005-03-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NEE",
+   "execution_date": "2005-03-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "DHI",
+   "execution_date": "2005-03-17",
+   "split_from": 3,
+   "split_to": 4
+  },
+  {
+   "ticker": "CTRA",
+   "execution_date": "2005-04-01",
+   "split_from": 2,
+   "split_to": 3
+  },
+  {
+   "ticker": "SM",
+   "execution_date": "2005-04-01",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "TTWO",
+   "execution_date": "2005-04-12",
+   "split_from": 2,
+   "split_to": 3
+  },
+  {
+   "ticker": "LNG",
+   "execution_date": "2005-04-25",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "STZ",
+   "execution_date": "2005-05-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "SPGI",
+   "execution_date": "2005-05-18",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "MCO",
+   "execution_date": "2005-05-19",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "MGM",
+   "execution_date": "2005-05-19",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "OVV",
+   "execution_date": "2005-05-23",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "UNH",
+   "execution_date": "2005-05-31",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "ELV",
+   "execution_date": "2005-06-01",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "COP",
+   "execution_date": "2005-06-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "MUR",
+   "execution_date": "2005-06-06",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CVS",
+   "execution_date": "2005-06-07",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "RTX",
+   "execution_date": "2005-06-13",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "ORLY",
+   "execution_date": "2005-06-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CAT",
+   "execution_date": "2005-07-14",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "PPL",
+   "execution_date": "2005-08-25",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "IR",
+   "execution_date": "2005-09-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "PHM",
+   "execution_date": "2005-09-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "SBUX",
+   "execution_date": "2005-10-24",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "HOLX",
+   "execution_date": "2005-12-01",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "RRC",
+   "execution_date": "2005-12-05",
+   "split_from": 1,
+   "split_to": 1.5
+  },
+  {
+   "ticker": "VLO",
+   "execution_date": "2005-12-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NVDA",
+   "execution_date": "2006-04-07",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "SLB",
+   "execution_date": "2006-04-10",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CB",
+   "execution_date": "2006-04-19",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "ITW",
+   "execution_date": "2006-05-26",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "HES",
+   "execution_date": "2006-06-01",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "NUE",
+   "execution_date": "2006-06-01",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CBRE",
+   "execution_date": "2006-06-02",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "MAR",
+   "execution_date": "2006-06-12",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "TROW",
+   "execution_date": "2006-06-26",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "LOW",
+   "execution_date": "2006-07-03",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "HAL",
+   "execution_date": "2006-07-17",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "RS",
+   "execution_date": "2006-07-20",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "WFC",
+   "execution_date": "2006-08-14",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "OXY",
+   "execution_date": "2006-08-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "VICI",
+   "execution_date": "2006-11-16",
+   "split_from": 1200,
+   "split_to": 1
+  },
+  {
+   "ticker": "STLD",
+   "execution_date": "2006-11-21",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "AME",
+   "execution_date": "2006-11-28",
+   "split_from": 2,
+   "split_to": 3
+  },
+  {
+   "ticker": "EMR",
+   "execution_date": "2006-12-12",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CMCSA",
+   "execution_date": "2007-02-22",
+   "split_from": 2,
+   "split_to": 3
+  },
+  {
+   "ticker": "ALB",
+   "execution_date": "2007-03-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "SEE",
+   "execution_date": "2007-03-19",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "APH",
+   "execution_date": "2007-04-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CTRA",
+   "execution_date": "2007-04-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NKE",
+   "execution_date": "2007-04-03",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NRG",
+   "execution_date": "2007-06-01",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CI",
+   "execution_date": "2007-06-05",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "MRO",
+   "execution_date": "2007-06-19",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "GILD",
+   "execution_date": "2007-06-25",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "OMC",
+   "execution_date": "2007-06-26",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "YUM",
+   "execution_date": "2007-06-27",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NVDA",
+   "execution_date": "2007-09-11",
+   "split_from": 2,
+   "split_to": 3
+  },
+  {
+   "ticker": "FMC",
+   "execution_date": "2007-09-14",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "PH",
+   "execution_date": "2007-10-02",
+   "split_from": 2,
+   "split_to": 3
+  },
+  {
+   "ticker": "TAP",
+   "execution_date": "2007-10-04",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "D",
+   "execution_date": "2007-11-20",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "IDXX",
+   "execution_date": "2007-11-27",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "DE",
+   "execution_date": "2007-12-04",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "APGE",
+   "execution_date": "2008-01-08",
+   "split_from": 50,
+   "split_to": 1
+  },
+  {
+   "ticker": "STLD",
+   "execution_date": "2008-03-31",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "HOLX",
+   "execution_date": "2008-04-03",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "UNP",
+   "execution_date": "2008-05-29",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "ILMN",
+   "execution_date": "2008-09-23",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "AIG",
+   "execution_date": "2009-07-01",
+   "split_from": 20,
+   "split_to": 1
+  },
+  {
+   "ticker": "WBD",
+   "execution_date": "2009-11-17",
+   "split_from": 1,
+   "split_to": 4
+  },
+  {
+   "ticker": "BRK.B",
+   "execution_date": "2010-01-21",
+   "split_from": 1,
+   "split_to": 50
+  },
+  {
+   "ticker": "EW",
+   "execution_date": "2010-05-28",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "GIS",
+   "execution_date": "2010-06-09",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "WY",
+   "execution_date": "2010-07-20",
+   "split_from": 1,
+   "split_to": 2.443408
+  },
+  {
+   "ticker": "MRNA",
+   "execution_date": "2010-07-22",
+   "split_from": 4,
+   "split_to": 1
+  },
+  {
+   "ticker": "AME",
+   "execution_date": "2010-12-22",
+   "split_from": 2,
+   "split_to": 3
+  },
+  {
+   "ticker": "AIG",
+   "execution_date": "2011-01-20",
+   "split_from": 1,
+   "split_to": 1.533933
+  },
+  {
+   "ticker": "FCX",
+   "execution_date": "2011-02-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "HRL",
+   "execution_date": "2011-02-15",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "BALL",
+   "execution_date": "2011-02-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "ETN",
+   "execution_date": "2011-03-01",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "WEC",
+   "execution_date": "2011-03-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "INSM",
+   "execution_date": "2011-03-03",
+   "split_from": 10,
+   "split_to": 1
+  },
+  {
+   "ticker": "C",
+   "execution_date": "2011-05-09",
+   "split_from": 10,
+   "split_to": 1
+  },
+  {
+   "ticker": "CHD",
+   "execution_date": "2011-06-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "FTNT",
+   "execution_date": "2011-06-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "EMN",
+   "execution_date": "2011-10-04",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "ARWR",
+   "execution_date": "2011-11-17",
+   "split_from": 10,
+   "split_to": 1
+  },
+  {
+   "ticker": "ROST",
+   "execution_date": "2011-12-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "EXPE",
+   "execution_date": "2011-12-21",
+   "split_from": 2,
+   "split_to": 1
+  },
+  {
+   "ticker": "MRNA",
+   "execution_date": "2011-12-23",
+   "split_from": 10,
+   "split_to": 1
+  },
+  {
+   "ticker": "EL",
+   "execution_date": "2012-01-23",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CTRA",
+   "execution_date": "2012-01-26",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "TJX",
+   "execution_date": "2012-02-03",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "TGTX",
+   "execution_date": "2012-04-30",
+   "split_from": 56.25,
+   "split_to": 1
+  },
+  {
+   "ticker": "FMC",
+   "execution_date": "2012-05-25",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "OKE",
+   "execution_date": "2012-06-04",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "AME",
+   "execution_date": "2012-07-02",
+   "split_from": 2,
+   "split_to": 3
+  },
+  {
+   "ticker": "DUK",
+   "execution_date": "2012-07-03",
+   "split_from": 3,
+   "split_to": 1
+  },
+  {
+   "ticker": "CME",
+   "execution_date": "2012-07-23",
+   "split_from": 1,
+   "split_to": 5
+  },
+  {
+   "ticker": "KO",
+   "execution_date": "2012-08-13",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NKE",
+   "execution_date": "2012-12-26",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "GILD",
+   "execution_date": "2013-01-28",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "PINS",
+   "execution_date": "2013-03-28",
+   "split_from": 1,
+   "split_to": 100
+  },
+  {
+   "ticker": "CRM",
+   "execution_date": "2013-04-18",
+   "split_from": 1,
+   "split_to": 4
+  },
+  {
+   "ticker": "VLO",
+   "execution_date": "2013-05-02",
+   "split_from": 1000,
+   "split_to": 1094
+  },
+  {
+   "ticker": "CL",
+   "execution_date": "2013-05-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "WAB",
+   "execution_date": "2013-06-12",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "OGE",
+   "execution_date": "2013-07-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CTRA",
+   "execution_date": "2013-08-15",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "DVA",
+   "execution_date": "2013-09-09",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "PINS",
+   "execution_date": "2014-01-08",
+   "split_from": 3,
+   "split_to": 1
+  },
+  {
+   "ticker": "MA",
+   "execution_date": "2014-01-22",
+   "split_from": 1,
+   "split_to": 10
+  },
+  {
+   "ticker": "AAPL",
+   "execution_date": "2014-06-09",
+   "split_from": 1,
+   "split_to": 7
+  },
+  {
+   "ticker": "WELL",
+   "execution_date": "2014-07-03",
+   "split_from": 165,
+   "split_to": 1
+  },
+  {
+   "ticker": "WBD",
+   "execution_date": "2014-08-07",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "APH",
+   "execution_date": "2014-10-10",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "V",
+   "execution_date": "2015-03-19",
+   "split_from": 1,
+   "split_to": 4
+  },
+  {
+   "ticker": "SBUX",
+   "execution_date": "2015-04-09",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "MPC",
+   "execution_date": "2015-06-11",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "ROST",
+   "execution_date": "2015-06-12",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "PPG",
+   "execution_date": "2015-06-15",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "IDXX",
+   "execution_date": "2015-06-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CF",
+   "execution_date": "2015-06-18",
+   "split_from": 1,
+   "split_to": 5
+  },
+  {
+   "ticker": "KR",
+   "execution_date": "2015-07-14",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NFLX",
+   "execution_date": "2015-07-15",
+   "split_from": 1,
+   "split_to": 7
+  },
+  {
+   "ticker": "ZG",
+   "execution_date": "2015-08-17",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "EW",
+   "execution_date": "2015-12-14",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NKE",
+   "execution_date": "2015-12-24",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "HRL",
+   "execution_date": "2016-02-10",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "LNT",
+   "execution_date": "2016-05-20",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "MDGL",
+   "execution_date": "2016-07-25",
+   "split_from": 35,
+   "split_to": 1
+  },
+  {
+   "ticker": "CHD",
+   "execution_date": "2016-09-02",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "YUM",
+   "execution_date": "2016-11-01",
+   "split_from": 1000,
+   "split_to": 1391
+  },
+  {
+   "ticker": "ICE",
+   "execution_date": "2016-11-04",
+   "split_from": 1,
+   "split_to": 5
+  },
+  {
+   "ticker": "MNST",
+   "execution_date": "2016-11-10",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "HLT",
+   "execution_date": "2017-01-04",
+   "split_from": 3,
+   "split_to": 1
+  },
+  {
+   "ticker": "CMCSA",
+   "execution_date": "2017-02-21",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "NUVL",
+   "execution_date": "2017-03-10",
+   "split_from": 1200000,
+   "split_to": 1
+  },
+  {
+   "ticker": "BALL",
+   "execution_date": "2017-05-17",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "MRNA",
+   "execution_date": "2017-08-03",
+   "split_from": 10,
+   "split_to": 1
+  },
+  {
+   "ticker": "HSIC",
+   "execution_date": "2017-09-15",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "ISRG",
+   "execution_date": "2017-10-06",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "LEN",
+   "execution_date": "2017-11-09",
+   "split_from": 1000,
+   "split_to": 1017
+  },
+  {
+   "ticker": "AFL",
+   "execution_date": "2018-03-19",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "TJX",
+   "execution_date": "2018-11-07",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "HSIC",
+   "execution_date": "2019-02-08",
+   "split_from": 1000,
+   "split_to": 1275
+  },
+  {
+   "ticker": "DD",
+   "execution_date": "2019-06-03",
+   "split_from": 3,
+   "split_to": 1
+  },
+  {
+   "ticker": "OVV",
+   "execution_date": "2020-01-27",
+   "split_from": 5,
+   "split_to": 1
+  },
+  {
+   "ticker": "CHK",
+   "execution_date": "2020-04-15",
+   "split_from": 200,
+   "split_to": 1
+  },
+  {
+   "ticker": "EW",
+   "execution_date": "2020-06-01",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "AAPL",
+   "execution_date": "2020-08-31",
+   "split_from": 1,
+   "split_to": 4
+  },
+  {
+   "ticker": "TSLA",
+   "execution_date": "2020-08-31",
+   "split_from": 1,
+   "split_to": 5
+  },
+  {
+   "ticker": "NEE",
+   "execution_date": "2020-10-27",
+   "split_from": 1,
+   "split_to": 4
+  },
+  {
+   "ticker": "APH",
+   "execution_date": "2021-03-05",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "SHW",
+   "execution_date": "2021-04-01",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "TTD",
+   "execution_date": "2021-06-17",
+   "split_from": 1,
+   "split_to": 10
+  },
+  {
+   "ticker": "NVDA",
+   "execution_date": "2021-07-20",
+   "split_from": 1,
+   "split_to": 4
+  },
+  {
+   "ticker": "GE",
+   "execution_date": "2021-08-02",
+   "split_from": 8,
+   "split_to": 1
+  },
+  {
+   "ticker": "ISRG",
+   "execution_date": "2021-10-05",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "MCHP",
+   "execution_date": "2021-10-13",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "IBM",
+   "execution_date": "2021-11-04",
+   "split_from": 1000,
+   "split_to": 1046
+  },
+  {
+   "ticker": "ANET",
+   "execution_date": "2021-11-18",
+   "split_from": 1,
+   "split_to": 4
+  },
+  {
+   "ticker": "AMZN",
+   "execution_date": "2022-06-06",
+   "split_from": 1,
+   "split_to": 20
+  },
+  {
+   "ticker": "DXCM",
+   "execution_date": "2022-06-13",
+   "split_from": 1,
+   "split_to": 4
+  },
+  {
+   "ticker": "FTNT",
+   "execution_date": "2022-06-23",
+   "split_from": 1,
+   "split_to": 5
+  },
+  {
+   "ticker": "GOOG",
+   "execution_date": "2022-07-18",
+   "split_from": 1,
+   "split_to": 20
+  },
+  {
+   "ticker": "GOOGL",
+   "execution_date": "2022-07-18",
+   "split_from": 1,
+   "split_to": 20
+  },
+  {
+   "ticker": "TSLA",
+   "execution_date": "2022-08-25",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "PANW",
+   "execution_date": "2022-09-14",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "GE",
+   "execution_date": "2023-01-04",
+   "split_from": 1000,
+   "split_to": 1281
+  },
+  {
+   "ticker": "MNST",
+   "execution_date": "2023-03-28",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "SRE",
+   "execution_date": "2023-08-22",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "PRAX",
+   "execution_date": "2023-11-29",
+   "split_from": 15,
+   "split_to": 1
+  },
+  {
+   "ticker": "COO",
+   "execution_date": "2024-02-20",
+   "split_from": 1,
+   "split_to": 4
+  },
+  {
+   "ticker": "WMT",
+   "execution_date": "2024-02-26",
+   "split_from": 1,
+   "split_to": 3
+  },
+  {
+   "ticker": "MMM",
+   "execution_date": "2024-04-01",
+   "split_from": 1000,
+   "split_to": 1196
+  },
+  {
+   "ticker": "GE",
+   "execution_date": "2024-04-02",
+   "split_from": 1000,
+   "split_to": 1253
+  },
+  {
+   "ticker": "NVDA",
+   "execution_date": "2024-06-10",
+   "split_from": 1,
+   "split_to": 10
+  },
+  {
+   "ticker": "APH",
+   "execution_date": "2024-06-12",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "CMG",
+   "execution_date": "2024-06-26",
+   "split_from": 1,
+   "split_to": 50
+  },
+  {
+   "ticker": "AVGO",
+   "execution_date": "2024-07-15",
+   "split_from": 1,
+   "split_to": 10
+  },
+  {
+   "ticker": "CTAS",
+   "execution_date": "2024-09-12",
+   "split_from": 1,
+   "split_to": 4
+  },
+  {
+   "ticker": "LRCX",
+   "execution_date": "2024-10-03",
+   "split_from": 1,
+   "split_to": 10
+  },
+  {
+   "ticker": "ANET",
+   "execution_date": "2024-12-04",
+   "split_from": 1,
+   "split_to": 4
+  },
+  {
+   "ticker": "ETR",
+   "execution_date": "2024-12-13",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "PANW",
+   "execution_date": "2024-12-16",
+   "split_from": 1,
+   "split_to": 2
+  },
+  {
+   "ticker": "LEN",
+   "execution_date": "2025-01-21",
+   "split_from": 1000,
+   "split_to": 1033
+  },
+  {
+   "ticker": "ORLY",
+   "execution_date": "2025-06-10",
+   "split_from": 1,
+   "split_to": 15
+  },
+  {
+   "ticker": "HON",
+   "execution_date": "2025-10-30",
+   "split_from": 1000,
+   "split_to": 1061
+  },
+  {
+   "ticker": "DD",
+   "execution_date": "2025-11-03",
+   "split_from": 100,
+   "split_to": 239
+  },
+  {
+   "ticker": "NFLX",
+   "execution_date": "2025-11-17",
+   "split_from": 1,
+   "split_to": 10
+  },
+  {
+   "ticker": "NOW",
+   "execution_date": "2025-12-18",
+   "split_from": 1,
+   "split_to": 5
+  },
+  {
+   "ticker": "AMCR",
+   "execution_date": "2026-01-15",
+   "split_from": 5,
+   "split_to": 1
+  },
+  {
+   "ticker": "BKNG",
+   "execution_date": "2026-04-06",
+   "split_from": 1,
+   "split_to": 25
+  },
+  {
+   "ticker": "KLAC",
+   "execution_date": "2026-06-12",
+   "split_from": 1,
+   "split_to": 10
+  },
+  {
+   "ticker": "DD",
+   "execution_date": "2026-06-24",
+   "split_from": 3,
+   "split_to": 1
+  },
+  {
+   "ticker": "MNST",
+   "execution_date": "2026-08-11",
+   "split_from": 1,
+   "split_to": 2
+  }
+ ]
+}

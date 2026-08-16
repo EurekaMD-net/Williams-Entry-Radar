@@ -301,3 +301,17 @@ def test_render_report_verdicts(tmp_path):
     assert verdict == "INSUFFICIENT"
     _, verdict = bt.render_report(meta, _rows(400, 2.0, 1.0), {}, {}, {})
     assert verdict == "FAIL"
+
+
+def test_sigma_window_clean_and_join_unclean_drop():
+    assert bt.sigma_window_clean("2025-03-07", "2024-09-06")       # 26w back = 2024-09-06 → inside tail
+    assert not bt.sigma_window_clean("2025-03-07", "2024-09-13")   # tail starts one week too late
+    assert bt.sigma_window_clean("2025-03-07", None)
+    sig = [{"ticker": "A", "as_of": "2025-03-07", "level": "S1", "close": 100.0, "close_h4": 110.0}]
+    fcs = [{"ticker": "A", "as_of": "2025-03-07", "r10": -0.1, "r50": 0.0, "r90": 0.1, "asym_log": 1.0, "last_close": 100.0, "baseline": {"r10": -0.2, "r50": 0.0, "r90": 0.2}}]
+    joined, drop = bt.join_rows(sig, fcs, seam=None, clean_from={"A": "2025-01-01"})
+    assert joined == [] and drop == {"unclean_window": 1}
+    joined, drop = bt.join_rows(sig, fcs, seam=None, clean_from={"A": "2024-01-01"})
+    assert len(joined) == 1 and drop == {}
+    joined, drop = bt.join_rows(sig, fcs, seam=None, clean_from={})  # unknown ticker → never clean
+    assert drop == {"unclean_window": 1}

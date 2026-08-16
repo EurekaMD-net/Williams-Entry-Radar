@@ -119,7 +119,7 @@ def build_row(ticker: str, as_of: str, dates: list[str], closes: np.ndarray, q: 
         "as_of": as_of or dates[-1],
         "last_bar": dates[-1],
         "bars_used": int(len(closes)),
-        "last_close": round(last, 4),
+        "last_close": round(last, 6),
         "horizon": horizon,
         "p10": round(q["p10"], 4),
         "p50": round(q["p50"], 4),
@@ -238,6 +238,7 @@ def main(argv: list[str]) -> int:
     n_ok = sum(1 for r in results if "error" not in r)
     payload = {
         "meta": {
+            "db": os.path.abspath(args.db),
             "model": MODEL_ID,
             "lib": LIB,
             "horizon": args.horizon,

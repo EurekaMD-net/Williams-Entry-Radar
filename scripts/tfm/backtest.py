@@ -138,13 +138,25 @@ def spans_seam(as_of: str, horizon: int, seam: str = SEAM_DATE) -> bool:
     return (d - timedelta(weeks=SIGMA_WINDOW_WEEKS)) <= sd <= (d + timedelta(weeks=horizon))
 
 
-def join_rows(signal_rows: list[dict], forecasts: list[dict], horizon: int = 4) -> tuple[list[dict], dict]:
+def sigma_window_clean(as_of: str, clean_from: str | None) -> bool:
+    """True if the 26-week σ window (and thus everything later) lies inside the ticker's single-basis tail."""
+    if not clean_from:
+        return True
+    return (date.fromisoformat(as_of) - timedelta(weeks=SIGMA_WINDOW_WEEKS)).isoformat() >= clean_from
+
+
+def join_rows(
+    signal_rows: list[dict], forecasts: list[dict], horizon: int = 4, seam: str | None = SEAM_DATE, clean_from: dict[str, str] | None = None
+) -> tuple[list[dict], dict]:
     fc = {(f["ticker"], f["as_of"]): f for f in forecasts}
     joined: list[dict] = []
     drop = defaultdict(int)
     for s in signal_rows:
-        if spans_seam(s["as_of"], horizon):
+        if seam and spans_seam(s["as_of"], horizon, seam):
             drop["seam_window"] += 1
+            continue
+        if clean_from is not None and not sigma_window_clean(s["as_of"], clean_from.get(s["ticker"], "9999-12-31")):
+            drop["unclean_window"] += 1
             continue
         f = fc.get((s["ticker"], s["as_of"]))
         if f is None:
@@ -159,10 +171,15 @@ def join_rows(signal_rows: list[dict], forecasts: list[dict], horizon: int = 4) 
         if s["close"] <= 0 or s["close_h4"] <= 0:
             drop["bad_close"] += 1
             continue
-        if abs(f["last_close"] / s["close"] - 1.0) > 1e-6:  # forecast must have been made AT as_of
+        if abs(f["last_close"] / s["close"] - 1.0) > 2e-5:  # forecast must have been made AT as_of (2e-5 absorbs last_close rounding to 6 dp)
             drop["close_mismatch"] += 1
             continue
         b = f["baseline"]
+        # informational: does the model's context (bars_used weekly bars back from as_of) reach before clean_from?
+        ctx_unclean = False
+        if clean_from is not None and f.get("bars_used"):
+            ctx_start = (date.fromisoformat(s["as_of"]) - timedelta(weeks=int(f["bars_used"]) - 1)).isoformat()
+            ctx_unclean = ctx_start < clean_from.get(s["ticker"], "9999-12-31")
         joined.append(
             {
                 "ticker": s["ticker"],
@@ -172,6 +189,7 @@ def join_rows(signal_rows: list[dict], forecasts: list[dict], horizon: int = 4) 
                 "tfm": (f["r10"], f["r50"], f["r90"]),
                 "base": (b["r10"], b["r50"], b["r90"]),
                 "asym": f.get("asym_log"),
+                "ctx_unclean": ctx_unclean,
             }
         )
     return joined, dict(drop)
@@ -242,6 +260,7 @@ def render_report(meta: dict, joined: list[dict], drop: dict, sig_meta: dict, fc
         "",
         f"- generated: {meta['generated_at']}",
         f"- model: `{fc_meta.get('model')}` · lib `{fc_meta.get('lib')}` · horizon {fc_meta.get('horizon')} · context {fc_meta.get('context')}",
+        f"- source DB: population `{sig_meta.get('db', 'n/a')}` · forecasts `{fc_meta.get('db', 'n/a')}`",
         f"- population: {sig_meta.get('total_before_cap')} signal-weeks since {sig_meta.get('since')} across {sig_meta.get('tickers')} tickers"
         f" (cap {sig_meta.get('cap')} → {len(joined) + sum(drop.values())} candidates); dropped: {drop or 'none'}",
         f"- scored rows: {len(joined)} · post-{RECENT_CUTOFF}: {len(recent)} (gate needs ≥{MIN_RECENT})",
@@ -268,9 +287,14 @@ def render_report(meta: dict, joined: list[dict], drop: dict, sig_meta: dict, fc
         "",
         "- Pre-2025 windows may be optimistic if TimesFM's pretraining corpus contained public equity series (cutoff not published in enough detail).",
         "- Universe is today's active registry — survivorship inflates realised returns slightly; second-order for calibration.",
-        f"- radar.db has an adjustment seam at {SEAM_DATE}: earlier bars are Alpha Vantage dividend-adjusted closes, later bars Polygon split-adjusted only"
-        f" (166/387 tickers jump >5% in that week). Rows whose realised-return or σ window spans the seam are dropped (`seam_window`);"
-        " the 512-bar model context still contains the seam for post-2025 rows (a one-off level shift the model sees as history). Same series feeds model and baseline.",
+        (
+            f"- radar.db has an adjustment seam at {meta['seam']}: earlier bars are Alpha Vantage dividend-adjusted closes, later bars Polygon split-adjusted only"
+            " (196/387 tickers move >5% either way in that week; 166 upward). Rows whose realised-return or σ window spans the seam are dropped (`seam_window`);"
+            " the model context still contains the seam for later rows (a one-off level shift the model sees as history). Same series feeds model and baseline."
+            if meta.get("seam")
+            else f"- seam filter OFF: the source DB is the split-basis copy (make-splitbasis-db.py); rows whose σ window reaches into a ticker's unreconcilable (spin-off) stretch are dropped as `unclean_window`;"
+            f" the model context still reaches into an unreconciled stretch for {sum(1 for r in joined if r.get('ctx_unclean'))} of {len(joined)} scored rows (level shift seen as history)."
+        ),
     ]
     return "\n".join(md) + "\n", verdict
 
@@ -290,7 +314,14 @@ def main(argv: list[str]) -> int:
     p.add_argument("--rows", required=True, help="signal-weeks.json from signal-weeks.ts")
     p.add_argument("--forecasts", required=True, help="forecasts.json from forecast.py --rows")
     p.add_argument("--out", required=True, help="report.md path; rows.csv is written beside it")
+    p.add_argument("--seam-date", dest="seam_date", default=SEAM_DATE, help="adjustment seam to exclude around (YYYY-MM-DD) or 'none' when the DB is single-basis")
+    p.add_argument("--clean-from", dest="clean_from", help="make-splitbasis-db summary JSON; rows whose σ window precedes the ticker's single-basis tail are dropped (unclean_window)")
     args = p.parse_args(argv)
+    seam = None if args.seam_date.lower() == "none" else args.seam_date
+    clean_from = None
+    if args.clean_from:
+        with open(args.clean_from) as fh:
+            clean_from = json.load(fh)["clean_from"]
 
     with open(args.rows) as fh:
         sig = json.load(fh)
@@ -300,8 +331,8 @@ def main(argv: list[str]) -> int:
     if h_sig is not None and h_fc is not None and h_sig != h_fc:
         print(f"[tfm-backtest] horizon mismatch: signal-weeks {h_sig} vs forecasts {h_fc} — refusing to score", file=sys.stderr)
         return 1
-    joined, drop = join_rows(sig["rows"], fc["rows"], horizon=int(h_fc or 4))
-    meta = {"generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    joined, drop = join_rows(sig["rows"], fc["rows"], horizon=int(h_fc or 4), seam=seam, clean_from=clean_from)
+    meta = {"generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "seam": seam, "clean_from": bool(clean_from)}
     md, verdict = render_report(meta, joined, drop, sig.get("meta", {}), fc.get("meta", {}))
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     with open(args.out, "w") as fh:

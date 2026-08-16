@@ -1,6 +1,6 @@
 # TimesFM × Williams Radar — Fase 1 Spec (zero-touch sidecar + calibration gate)
 
-> **Status:** APPROVED + EXECUTED 2026-08-16 — gate **FAIL (G1)**: calibrated but does not beat the random-walk baseline; §3.5 sidecar NOT built. Report: `results/tfm-backtest/2026-08-16/report.md`; summary in `docs/timesfm-integration-plan.md` §9.
+> **Status:** APPROVED + EXECUTED 2026-08-16 — gate **FAIL (G1)** in three runs (mixed DB with seam exclusion · Polygon-only window · dividend/split-corrected single-basis copy): calibrated but does not beat the random-walk baseline; §3.5 sidecar NOT built. Reports: `results/tfm-backtest/2026-08-16/report.md`, `…/2026-08-16-clean/report-*.md`, `…/2026-08-16-splitbasis/report.md`; summary in `docs/timesfm-integration-plan.md` §9.
 > **Supersedes:** §4 "Fase 1" and §7/§8 of `docs/timesfm-integration-plan.md` (Jarvis, 2026-08-16). Review findings that drove this re-shape are summarised in §1.
 > **Freeze posture:** nothing under `src/` changes. All new code lives in `scripts/tfm/` and `/opt/timesfm`; the frozen scanner is *imported*, never edited.
 
@@ -32,6 +32,8 @@ Stand up TimesFM 2.5 (CPU, own venv) as a **sidecar** that can forecast a 4-week
 New files (all additive):
 
 ```
+scripts/tfm/fetch-reference.ts     # (added 08-16) Polygon dividends + splits (free-tier reference endpoints, full history)
+scripts/tfm/make-splitbasis-db.py  # (added 08-16) backtest COPY of radar.db on Polygon's split-only basis; per-ticker clean_from
 scripts/tfm/forecast.py        # TimesFM CLI: tickers or as-of rows → JSON
 scripts/tfm/signal-weeks.ts    # historical signal population via frozen scanTicker() (import only)
 scripts/tfm/backtest.py        # metrics vs baseline → results/tfm-backtest/<date>/report.md
