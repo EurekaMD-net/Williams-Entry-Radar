@@ -115,7 +115,7 @@ Imports the frozen scanner **read-only**: `import { scanTicker } from "../../src
 
 Per row: realised `y = ln(close_h4 / close)`. Metrics for TimesFM and baseline (definitions in §4), overall + by level (S1/S2D/S2) + by period (pre/post 2025-01-01); segments with n < 30 are flagged `*` (descriptive only). Writes `report.md` (tables + gate verdict) and `rows.csv` (one line per row, for later slicing). Bootstrap resamples **by as-of week**, not by row — same-week returns are correlated through the market. Join guards: refuses a horizon mismatch between the two artefacts; drops (and counts) rows where the forecast's `last_close` ≠ the population's `close` (a per-row no-lookahead invariant); drops rows whose realised-return or σ window spans the **radar.db adjustment seam** at 2024-07-19 (bars before it are Alpha Vantage dividend-adjusted, after it Polygon split-adjusted — 166/387 tickers jump >5% in that week; found by qa-audit, report-only for the frozen fetcher). Verdict `INSUFFICIENT` (not FAIL) when nothing was scored.
 
-### 3.5 (conditional — only after the gate passes) weekly sidecar
+### 3.5 weekly sidecar — **OPERATOR OVERRIDE 2026-08-16: build despite the FAIL, annotation-only** (see §10)
 
 - `scripts/tfm/weekly.sh <ISO-week>`: resolves `results/radar_<week>.csv` → tickers with `signalLevel ∈ {S1,S2D,S2}` → `forecast.py --tickers … --out results/tfm_<week>.json` → renders `results/tfm_<week>.md` (one line per ticker, §6 format) → exit 0. Idempotent: exits 0 without work if `tfm_<week>.md` exists; exits 3 with a log line if the CSV is not there yet (radar still running).
 - `williams-radar-tfm.service` (oneshot): `WorkingDirectory=/root/claude/williams-entry-radar`, `ExecStart=/root/claude/williams-entry-radar/scripts/tfm/weekly.sh`, `Environment=HF_HOME=/opt/timesfm/hf HF_HUB_OFFLINE=1 OMP_NUM_THREADS=2 TZ=America/Mexico_City`, `MemoryMax=3G`, `CPUQuota=200%`, `Nice=10`, `TimeoutStartSec=20min`. **Not** `PartOf`/`After` the radar unit — the radar's cron lives inside its node process; there is no completion signal to hook.
@@ -150,7 +150,7 @@ The post-2025 split exists because TimesFM's pretraining corpus/cutoff is not pu
 
 ---
 
-## 6. Weekly artefact format (post-gate)
+## 6. Weekly artefact format
 
 `results/tfm_<week>.md` — one line per signal ticker, in the plan's Journal voice, annotation-only:
 
@@ -193,7 +193,7 @@ HF_HOME=/opt/timesfm/hf HF_HUB_OFFLINE=1 OMP_NUM_THREADS=2 /opt/timesfm/bin/pyth
   --out results/tfm-backtest/2026-08-16/report.md && sed -n 1,60p results/tfm-backtest/2026-08-16/report.md
 ```
 
-Steps 6+ (only on PASS): copy the two unit files to `/etc/systemd/system/`, `systemctl daemon-reload && systemctl enable --now williams-radar-tfm.timer`, then `systemctl start williams-radar-tfm.service` once by hand on the current week and read `results/tfm_<week>.md`.
+Steps 6+ (§3.5, per the §10 override): copy the two unit files to `/etc/systemd/system/`, `systemctl daemon-reload && systemctl enable --now williams-radar-tfm.timer`, then `systemctl start williams-radar-tfm.service` once by hand on the current week and read `results/tfm_<week>.md`.
 
 Effort estimate: forecast.py ≈ 120 LOC · signal-weeks.ts ≈ 80 LOC · backtest.py ≈ 150 LOC · weekly.sh + units ≈ 60 LOC. One session including the backtest run.
 
@@ -223,3 +223,22 @@ Effort estimate: forecast.py ≈ 120 LOC · signal-weeks.ts ≈ 80 LOC · backte
 - [ ] Verdict + numbers recorded in `docs/timesfm-integration-plan.md` ("Fase 1 result").
 - [ ] `git diff --stat` shows no changes under `src/`.
 - [ ] Only on PASS: timer enabled, one manual run produced `results/tfm_<week>.md`, radar unit untouched (`systemctl status williams-radar` unchanged).
+
+---
+
+## 10. NEXT SESSION — build §3.5 and run it on W33 (operator override, 2026-08-16)
+
+**Ruling (operator, 2026-08-16):** the gate FAILED three times (§5 verdicts recorded in `docs/timesfm-integration-plan.md` §9), and the operator chose to build the weekly sidecar anyway as a **pure annotation** — the random-walk band is printed next to the model band so a reader can see it adds nothing. This section is the complete brief; nothing else needs re-deriving.
+
+**Hard boundaries (unchanged):** zero edits under `src/`; no Journal wiring, no Telegram, no CSV/`signals.md` changes; the sidecar never writes to `data/radar.db` (opens it read-only) and never commits to git; failure ⇒ no artefact + a journal line, radar cascade untouched.
+
+**Build (all new files):**
+
+1. `scripts/tfm/weekly.sh <ISO-week, e.g. 2026-W33>` — `set -euo pipefail`; `cd /root/claude/williams-entry-radar`; CSV = `results/radar_<week>.csv` (exit 3 with a log line if absent — the radar may still be running); tickers = rows with `signalLevel ∈ {S1,S2D,S2}` (column 4; header `ticker,sector,tier,signalLevel,…`); idempotent: exit 0 without work if `results/tfm_<week>.md` exists; run `HF_HOME=/opt/timesfm/hf HF_HUB_OFFLINE=1 OMP_NUM_THREADS=2 /opt/timesfm/bin/python scripts/tfm/forecast.py --db data/radar.db --tickers <csv-list> --out results/tfm_<week>.json` (≈10 s for ~25 tickers); render `results/tfm_<week>.md` from the JSON with the §6 line format (one line per ticker, sorted S2 → S2D → S1 then ticker; error rows go to a footer "no forecast: X (reason)"); header `# TimesFM annotation — <week> · model <model> · <n> signals · generated <UTC>` plus the standing disclaimer: "Calibration gate FAILED (docs/timesfm-fase1-spec.md §5, three runs): the model band is statistically indistinguishable from the random-walk band shown beside it. Annotation only — not a signal, not a filter." Rendering = a small `scripts/tfm/render-weekly.py` (pure function + 2–3 pytest cases: line format, ordering, error footer, empty CSV ⇒ header + "0 signals").
+2. `scripts/tfm/systemd/williams-radar-tfm.service` (oneshot; `WorkingDirectory=/root/claude/williams-entry-radar`; `ExecStart=/bin/bash -c '/root/claude/williams-entry-radar/scripts/tfm/weekly.sh "$(TZ=America/Mexico_City date +%G-W%V)"'`; `Environment=HF_HOME=/opt/timesfm/hf HF_HUB_OFFLINE=1 OMP_NUM_THREADS=2 TZ=America/Mexico_City`; `MemoryMax=3G`, `CPUQuota=200%`, `Nice=10`, `TimeoutStartSec=20min`; NOT `PartOf`/`After` the radar unit — the radar's cron lives inside its node process, there is no completion signal) and `scripts/tfm/systemd/williams-radar-tfm.timer` (`OnCalendar=Fri 20:00 America/Mexico_City` + `Fri 21:30 America/Mexico_City`; `Persistent=false`; `WantedBy=timers.target`). Reference files live in the repo; install by hand (§7 steps 6+): `sudo cp scripts/tfm/systemd/williams-radar-tfm.{service,timer} /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable --now williams-radar-tfm.timer && systemctl list-timers williams-radar-tfm.timer`.
+3. `.gitignore`: `results/tfm_*.json` (keep `results/tfm_*.md` tracked — the artefact IS the deliverable).
+4. Docs: `docs/timesfm-integration-plan.md` §9 gets a one-line "sidecar armed 2026-08-XX (override), first artefact W33"; repo `CLAUDE.md` Authorized-tooling paragraph: `scripts/tfm/weekly.sh` + timer, annotation-only, how to disable (`systemctl disable --now williams-radar-tfm.timer`).
+
+**Run it on W33 (inputs already on disk):** `results/radar_2026-W33.csv` has 24 signals — S2D: AMT, UBER, SLB, NEM · S1: ISRG, DOW, OLN, HUN, CC, ORCL, QCOM, SNPS, CCI, SBAC, ARCT, FDX, HAL, ALB, DHI, CCL, TKO, IONS, CRSP, ALLO. Command: `scripts/tfm/weekly.sh 2026-W33` → expect `results/tfm_2026-W33.json` (24 rows, 0 errors) + `results/tfm_2026-W33.md` (24 lines + header + disclaimer). Then `sudo systemctl start williams-radar-tfm.service` once (idempotent ⇒ "already exists", exit 0) to prove the unit path, and check `journalctl -u williams-radar-tfm --since "5 min ago"`.
+
+**DoD:** scoped test runs green (per-file vitest / pytest — never the whole suite); `git diff --stat -- src/` empty; W33 artefact committed + pushed; timer enabled and listed (next fire Fri 2026-08-21 20:00 MX); qa-auditor pass on `weekly.sh` + units (fold Critical/Warning) BEFORE enabling the timer; memory + docs updated. Runtime facts: `forecast.py` CLI/JSON contract in §3.2 (row fields `p10/p50/p90/r10/r50/r90/asym_log/baseline{sigma_w,r10,r50,r90}/last_close`); model loads offline in 3 s; the qa-auditor writes `.claude/agent-memory/` into this repo — gitignored now.
