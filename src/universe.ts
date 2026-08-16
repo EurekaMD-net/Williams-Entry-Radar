@@ -438,7 +438,7 @@ const TIER2_IBB: TickerMeta[] = [
   { ticker: "NTLA",  sector: "IBB", tier: 2 },
   { ticker: "FATE",  sector: "IBB", tier: 2 },
   { ticker: "XNCR",  sector: "IBB", tier: 2 },
-  { ticker: "SGEN",  sector: "IBB", tier: 2 },
+  // SGEN removed 2026-08-16: delisted 2023-12-14 (acquired by Pfizer); AV kept returning phantom flat bars.
 ];
 
 const TIER2_XBI: TickerMeta[] = [

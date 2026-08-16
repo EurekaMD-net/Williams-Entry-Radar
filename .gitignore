@@ -22,3 +22,4 @@ results/tfm-backtest/**/*.db
 results/tfm-backtest/**/*.db-*
 !results/tfm-backtest/reference/*.json
 !results/tfm-backtest/radar-splitbasis-summary.json
+.claude/agent-memory/
