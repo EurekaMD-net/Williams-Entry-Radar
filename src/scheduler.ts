@@ -436,7 +436,8 @@ async function runWeeklyPipelineInner(): Promise<void> {
 
   // 2. Fetch stale / missing data. SPY rides along: it is the Journal's
   //    market reference (scanner-skipped) and had silently stopped refreshing
-  //    after the 2026-07-14 Polygon cutover ("SPY: —" from W30 to W37).
+  //    after the 2026-07-14 Polygon cutover (no generated SPY figure from W30 on;
+  //    the SPY text in W30/W31/W33/W35 was entered by hand).
   console.log("\n[1/8] Fetching data...");
   const tickers = getUniverseTickers();
   const fetchOpts = REFETCH ? { ttlDays: 0 } : {};
