@@ -13,8 +13,10 @@
  * Data contract:
  *   Scorecard prices (entryRef, currClose) come from:
  *     SELECT close FROM weekly_bars WHERE ticker = ? AND date = ?
- *   "date" is the LAST trading day of each week in the DB (always a Thursday
- *   per AV weekly series). Never Friday. Never assumed.
+ *   "date" is the LAST trading day of each week in the DB (Friday-keyed
+ *   Polygon bars since W29 2026; the AV era keyed holiday weeks by their last
+ *   trading day). Read from the DB, never assumed. A ticker whose latest bar
+ *   is older than the run date is reported as "not measured" (stale guard).
  *
  * Env vars:
  *   JOURNAL_REPO_PATH  — absolute path to thewilliamsradar-journal repo
@@ -26,6 +28,7 @@ import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getUniverseTickers } from "./universe.js";
 import type { ScanResult } from "./scanner.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -43,9 +46,10 @@ const JOURNAL_REPO_PATH =
 export interface ScorecardEntry {
   ticker: string;
   signal: string;
-  entryRef: number; // prev-week Thursday close (source of truth: radar.db)
-  currClose: number; // curr-week Thursday close (source of truth: radar.db)
-  deltaPct: number;
+  entryRef: number; // prev-week last close (source of truth: radar.db)
+  currClose: number; // curr-week last close (source of truth: radar.db)
+  /** null when the ticker has no bar for the current week (stale — not measured). */
+  deltaPct: number | null;
   result: "✓" | "✗" | "—";
   notes: string;
 }
@@ -56,8 +60,8 @@ export interface JournalData {
   year: number;
   prevWeekLabel: string;
   prevWeekNum: number;
-  runDate: string; // last trading day in DB (the Thursday AV closes on)
-  prevBarDate: string; // prev-week Thursday
+  runDate: string; // last trading day in DB (Friday-keyed Polygon bars since W29)
+  prevBarDate: string; // prev-week last trading day
   totalScanned: number;
   scorecard: ScorecardEntry[];
   catAThisWeek: ScanResult[];
@@ -226,18 +230,22 @@ export function buildJournalData(
     // Use the global MAX(date) across all tickers — SPY is sometimes stale
     // because its TTL was still valid from the prior week's fetch, so
     // getLastBarDate(SPY) can lag behind the rest of the universe.
+    // Scoped to the CURRENT universe: a retired symbol (PARA → Banzai) must
+    // never define the run date.
+    const universe = new Set(getUniverseTickers());
+    const inUniverse = `ticker IN (${[...universe].map(() => "?").join(",")})`;
     const globalMaxRow = db
-      .prepare("SELECT MAX(date) as d FROM weekly_bars")
-      .get() as { d: string | null };
+      .prepare(`SELECT MAX(date) as d FROM weekly_bars WHERE ${inUniverse}`)
+      .get(...universe) as { d: string | null };
     const runDate = globalMaxRow?.d ?? new Date().toISOString().slice(0, 10);
 
     // Previous trading week: the second-most-recent distinct date in the DB.
     // Also global — not per-ticker — for the same reason.
     const distinctDates = db
       .prepare(
-        "SELECT DISTINCT date FROM weekly_bars ORDER BY date DESC LIMIT 2",
+        `SELECT DISTINCT date FROM weekly_bars WHERE ${inUniverse} ORDER BY date DESC LIMIT 2`,
       )
-      .all() as { date: string }[];
+      .all(...universe) as { date: string }[];
     const prevBarDate = distinctDates.length >= 2 ? distinctDates[1].date : "";
 
     // SPY delta from DB
@@ -270,6 +278,43 @@ export function buildJournalData(
         console.warn(
           `[journal-gen] Missing closes for ${ticker} (prev=${tickerPrevDate}, curr=${tickerCurrDate}) — skipping`,
         );
+        continue;
+      }
+
+      // Universe guard: a candidate retired since last week (delisted or a
+      // reassigned symbol — PARA became Banzai International) must not be
+      // scored on whatever radar.db now holds under that ticker.
+      if (!universe.has(ticker)) {
+        scorecard.push({
+          ticker,
+          signal,
+          entryRef,
+          currClose,
+          deltaPct: null,
+          result: "—",
+          notes: "Removed from the universe (delisted/reassigned) — not measured.",
+        });
+        continue;
+      }
+
+      // Stale guard (2026-W37): when the provider has not published this
+      // week's bar for a ticker, its two latest bars are LAST week's interval.
+      // Reporting that as W(n-1)→W(n) performance is wrong — the W37 page did
+      // exactly that for 385 tickers. Keep the row, print no Δ, exclude it
+      // from the summary statistics.
+      if (tickerCurrDate !== runDate) {
+        console.warn(
+          `[journal-gen] ${ticker}: last bar ${tickerCurrDate} < run date ${runDate} — stale, not measured`,
+        );
+        scorecard.push({
+          ticker,
+          signal,
+          entryRef,
+          currClose,
+          deltaPct: null,
+          result: "—",
+          notes: `No W${weekNum} bar in radar.db (last ${tickerCurrDate}) — not measured.`,
+        });
         continue;
       }
 
@@ -350,9 +395,9 @@ function renderScorecard(data: JournalData): string {
   lines.push("");
   lines.push(
     `Performance of all Category A candidates named in W${prevWeekNum}. ` +
-      `Prices measured from the Thursday close of W${prevWeekNum} (${prevBarDate}) ` +
-      `to the Thursday close of W${weekNum} (${runDate}). ` +
-      `Alpha Vantage weekly bars — last bar of the trading week.`,
+      `Prices measured from the last weekly close of W${prevWeekNum} (${prevBarDate}) ` +
+      `to the last weekly close of W${weekNum} (${runDate}). ` +
+      `Polygon weekly bars — last trading day of the week.`,
   );
   lines.push("");
 
@@ -367,17 +412,25 @@ function renderScorecard(data: JournalData): string {
     );
     for (const e of scorecard) {
       lines.push(
-        `| ${e.ticker} | ${e.signal} | ${fmtPrice(e.entryRef)} | ${fmtPrice(e.currClose)} | ${fmtPct(e.deltaPct)} | ${e.result} | ${e.notes} |`,
+        e.deltaPct === null
+          ? `| ${e.ticker} | ${e.signal} | — | — | — | ${e.result} | ${e.notes} |`
+          : `| ${e.ticker} | ${e.signal} | ${fmtPrice(e.entryRef)} | ${fmtPrice(e.currClose)} | ${fmtPct(e.deltaPct)} | ${e.result} | ${e.notes} |`,
       );
     }
     lines.push("");
 
-    const escalated = scorecard.filter((e) => e.result === "✓").length;
-    const lost = scorecard.filter((e) => e.result === "✗").length;
-    const holding = scorecard.filter((e) => e.result === "—").length;
-    const positives = scorecard.filter((e) => e.deltaPct > 0).length;
+    const measured = scorecard.filter(
+      (e): e is ScorecardEntry & { deltaPct: number } => e.deltaPct !== null,
+    );
+    const stale = scorecard.length - measured.length;
+    const escalated = measured.filter((e) => e.result === "✓").length;
+    const lost = measured.filter((e) => e.result === "✗").length;
+    const holding = measured.filter((e) => e.result === "—").length;
+    const positives = measured.filter((e) => e.deltaPct > 0).length;
     const avgDelta =
-      scorecard.reduce((s, e) => s + e.deltaPct, 0) / scorecard.length;
+      measured.length === 0
+        ? null
+        : measured.reduce((s, e) => s + e.deltaPct, 0) / measured.length;
     const spyStr =
       spyDelta !== null
         ? `SPY W${prevWeekNum}→W${weekNum}: ${fmtPct(spyDelta)}`
@@ -385,13 +438,14 @@ function renderScorecard(data: JournalData): string {
 
     lines.push(
       `*Result key: ✓ escalation · ✗ signal lost · — holding/no position. ` +
-        `Entry Reference = Thursday close of W${prevWeekNum} (${prevBarDate}). ` +
-        `W${weekNum} Close = Thursday ${runDate}. Source: radar.db weekly_bars.*`,
+        `Entry Reference = last weekly close of W${prevWeekNum} (${prevBarDate}). ` +
+        `W${weekNum} Close = last weekly close ${runDate}. Source: radar.db weekly_bars.*`,
     );
     lines.push("");
     lines.push(
       `**Scorecard summary:** ${escalated} escalated · ${lost} lost signal · ${holding} holding · ` +
-        `${positives} of ${scorecard.length} positive · Avg Δ: ${fmtPct(avgDelta)} · ${spyStr}`,
+        `${positives} of ${measured.length} positive · Avg Δ: ${avgDelta === null ? "—" : fmtPct(avgDelta)} · ${spyStr}` +
+        (stale > 0 ? ` · ${stale} not measured (no W${weekNum} bar)` : ""),
     );
   }
 
@@ -401,37 +455,40 @@ function renderScorecard(data: JournalData): string {
 function renderSignalExitAnalysis(data: JournalData): string {
   const { prevWeekNum, weekNum, scorecard } = data;
 
-  const exits = scorecard.filter((e) => e.result === "✗");
+  const exits = scorecard.filter(
+    (e): e is ScorecardEntry & { deltaPct: number } =>
+      e.result === "✗" && e.deltaPct !== null,
+  );
   if (exits.length === 0) return "";
 
   const lines: string[] = [];
-  lines.push(`## Análisis de Salidas — Señales W${prevWeekNum}`);
+  lines.push(`## Exit Analysis — W${prevWeekNum} Signals`);
   lines.push("");
   lines.push(
-    `> 🔴 ANÁLISIS — ¿Los ${exits.length} nombres que perdieron señal salieron por apreciación real o por ruido?`,
+    `> 🔴 ANALYSIS — Did the ${exits.length} name${exits.length === 1 ? "" : "s"} that lost signal exit on real appreciation or noise?`,
   );
   lines.push("");
 
   type ExitVerdict = "real" | "range" | "false_technical" | "collapse";
-  function classify(e: ScorecardEntry): {
+  function classify(e: ScorecardEntry & { deltaPct: number }): {
     verdict: ExitVerdict;
     label: string;
   } {
     const d = e.deltaPct;
     const notes = e.notes.toLowerCase();
     if (notes.includes("ac turned red") || d <= -5)
-      return { verdict: "collapse", label: "🔴 Colapso — deterioro, no resolución" };
+      return { verdict: "collapse", label: "🔴 Breakdown — deterioration, not resolution" };
     if (notes.includes("ranging filter"))
       return d < 0
-        ? { verdict: "collapse", label: "❌ Deterioro — lateralización con caída" }
-        : { verdict: "range", label: "⚠️ Rango — lateralización confirmada por filtro" };
-    if (d >= 4) return { verdict: "real", label: "✅ Apreciación real" };
+        ? { verdict: "collapse", label: "❌ Deterioration — ranging with a decline" }
+        : { verdict: "range", label: "⚠️ Range — ranging confirmed by filter" };
+    if (d >= 4) return { verdict: "real", label: "✅ Real appreciation" };
     if (d >= 0 && d < 4)
-      return { verdict: "range", label: "⚠️ Rango — movimiento sin convicción" };
-    return { verdict: "false_technical", label: "❌ Falsa señal técnica — AC técnico, precio bajó" };
+      return { verdict: "range", label: "⚠️ Range — move without conviction" };
+    return { verdict: "false_technical", label: "❌ False technical signal — AC tick, price fell" };
   }
 
-  lines.push(`| Ticker | Δ% | Razón de salida | Veredicto |`);
+  lines.push(`| Ticker | Δ% | Exit Reason | Verdict |`);
   lines.push(`|--------|----|-----------------|-----------|`);
 
   const sorted = [...exits].sort((a, b) => b.deltaPct - a.deltaPct);
@@ -441,10 +498,10 @@ function renderSignalExitAnalysis(data: JournalData): string {
     const { verdict, label } = classify(e);
     counts[verdict]++;
     const reason = e.notes.includes("AC turned red")
-      ? "AC giró negativo"
+      ? "AC turned negative"
       : e.notes.includes("Ranging filter")
-        ? "Filtro de lateralización"
-        : "AC cruzó positivo";
+        ? "Ranging filter"
+        : "AC crossed positive";
     lines.push(`| **${e.ticker}** | ${fmtPct(e.deltaPct)} | ${reason} | ${label} |`);
   }
 
@@ -456,14 +513,14 @@ function renderSignalExitAnalysis(data: JournalData): string {
   const noisePct = Math.round(((counts.false_technical + counts.collapse) / total) * 100);
 
   lines.push(
-    `**Resumen: ${counts.real} apreciación real (${realPct}%) · ${counts.range} rango (${rangePct}%) · ${counts.false_technical + counts.collapse} sin soporte de precio o deterioro (${noisePct}%)**`,
+    `**Summary: ${counts.real} real appreciation (${realPct}%) · ${counts.range} range (${rangePct}%) · ${counts.false_technical + counts.collapse} no price support / deterioration (${noisePct}%)**`,
   );
   lines.push("");
 
   const worst = sorted[sorted.length - 1];
   if (worst && worst.deltaPct < -4) {
     lines.push(
-      `Notable: **${worst.ticker}** (${fmtPct(worst.deltaPct)}) no perdió la señal porque el setup resolvió — la perdió porque el deterioro se profundizó. Vale la pena monitorear en W${weekNum} como continuación de momentum negativo.`,
+      `Notable: **${worst.ticker}** (${fmtPct(worst.deltaPct)}) did not lose its signal because the setup resolved — it lost it because the deterioration deepened. Worth monitoring in W${weekNum} as a continuation of negative momentum.`,
     );
     lines.push("");
   }
@@ -598,7 +655,7 @@ function renderUniverse(data: JournalData): string {
     `- S1 active: ${s1.length}`,
     `- S2 degraded: ${s2Degraded.length}`,
     `- S2 pure: ${s2Pure.length}`,
-    `- Tickers at structural lows (≤p30): ${nearLowsCount}`,
+    `- Signal tickers at structural lows (≤p30): ${nearLowsCount}`,
   ].join("\n");
 }
 
@@ -771,7 +828,7 @@ export function generateJournalPage(
 
   console.log(`[journal-gen] Written: ${outPath}`);
   console.log(
-    `[journal-gen] Scorecard: ${data.scorecard.length} entries | ` +
+    `[journal-gen] Scorecard: ${data.scorecard.length} entries (${data.scorecard.filter((e) => e.deltaPct === null).length} not measured) | ` +
       `Signals: S2=${data.s2Pure.length} S2D=${data.s2Degraded.length} S1=${data.s1.length}`,
   );
 

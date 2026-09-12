@@ -213,6 +213,20 @@ export function upsertBars(rows: WeeklyBarRow[]): void {
  * Load all bars for a ticker, ordered ascending by date.
  * Returns [] if ticker has no data.
  */
+/** ticker -> MAX(date) for the given tickers (null when a ticker has no bars). */
+export function getLastBarDates(tickers: string[]): Map<string, string | null> {
+  const db = getDb();
+  const out = new Map<string, string | null>(tickers.map((t) => [t, null]));
+  if (tickers.length === 0) return out;
+  const rows = db
+    .prepare(
+      `SELECT ticker, MAX(date) AS d FROM weekly_bars WHERE ticker IN (${tickers.map(() => "?").join(",")}) GROUP BY ticker`,
+    )
+    .all(...tickers) as { ticker: string; d: string }[];
+  for (const r of rows) out.set(r.ticker, r.d);
+  return out;
+}
+
 export function loadBars(ticker: string): WeeklyBarRow[] {
   const db = getDb();
   return db

@@ -133,9 +133,12 @@ async function fetchFromPolygon(ticker: string): Promise<WeeklyBar[]> {
   return parseSeries(series);
 }
 
-export async function fetchTicker(ticker: string): Promise<WeeklyBar[]> {
+export async function fetchTicker(
+  ticker: string,
+  ttlDays?: number,
+): Promise<WeeklyBar[]> {
   // Cache-first — readCache now returns AVRawSeries directly
-  if (isCacheValid(ticker)) {
+  if (isCacheValid(ticker, ttlDays)) {
     const cached = readCache(ticker);
     if (cached) return parseSeries(cached as Parameters<typeof parseSeries>[0]);
   }
@@ -159,19 +162,20 @@ export async function fetchAll(
     ticker: string,
     fromCache: boolean,
   ) => void,
+  opts: { ttlDays?: number } = {},
 ): Promise<Map<string, WeeklyBar[]>> {
   const results = new Map<string, WeeklyBar[]>();
 
   for (let i = 0; i < tickers.length; i++) {
     const ticker = tickers[i];
-    const fromCache = isCacheValid(ticker);
+    const fromCache = isCacheValid(ticker, opts.ttlDays);
 
     try {
       if (!fromCache) {
         // Only delay if we need to hit the API
         if (i > 0) await sleep(DELAY_MS);
       }
-      const bars = await fetchTicker(ticker);
+      const bars = await fetchTicker(ticker, opts.ttlDays);
       results.set(ticker, bars);
       onProgress?.(i + 1, tickers.length, ticker, fromCache);
     } catch (err) {

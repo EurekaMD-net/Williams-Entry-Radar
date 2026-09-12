@@ -24,23 +24,29 @@
  *   TZ                   — should be America/Mexico_City
  *   RADAR_RESULTS_DIR    — override output dir (default: ./results)
  *   RADAR_DB_PATH        — override SQLite path (default: ./data/radar.db)
+ *   RADAR_COVERAGE_MIN   — bar-coverage guard threshold (default 0.9)
+ *   RADAR_COVERAGE_RETRIES        — refetch attempts below the threshold (default 2)
+ *   RADAR_COVERAGE_RETRY_WAIT_MS  — wait before each refetch (default 30 min)
  *
  * Schedule: Fridays 18:00 MX ("0 18 * * 5" in America/Mexico_City)
  * Can also be triggered manually: npx tsx src/scheduler.ts --run-now
+ * Add --refetch to bypass the 6-day bar cache (re-issue a week after the
+ * provider published late — see the bar-coverage guard below).
  */
 
 import cron from "node-cron";
 import { fetchAll } from "./fetcher.js";
+import { barCoverage } from "./coverage.js";
 import { runScan } from "./scanner.js";
 import { printReport, saveCSV, getWeekLabel } from "./weekly-report.js";
 import { enrichS2Tickers, formatXpozForTelegram } from "./xpoz-enrich.js";
 import { pushWeeklyResults } from "./git-push.js";
 import { generateJournalPage } from "./journal-generator.js";
-import { buildTelegramMessage, sendTelegram } from "./notify.js";
+import { buildTelegramMessage, escapeMd, sendTelegram } from "./notify.js";
 import { checkStaleSignals } from "./expand.js";
 import { seedRegistry } from "./cache.js";
 import { getUniverseTickers } from "./universe.js";
-import { loadBars } from "./db.js";
+import { getLastBarDates, loadBars } from "./db.js";
 import type { WeeklyBar } from "./fetcher.js";
 import { DEFAULT_TZ } from "./time.js";
 import fs from "fs";
@@ -299,6 +305,97 @@ async function runDeliveryPreflight(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Bar-coverage guard
+// ---------------------------------------------------------------------------
+//
+// 2026-W37: Polygon had not published the Friday bar for 385/387 tickers at
+// 18:00 MX. fetchAll succeeded, the scan re-used every ticker's previous bar,
+// and a "W37" Journal built on W36 data went live. The guard below checks how
+// many tickers carry a bar from the scan week; below RADAR_COVERAGE_MIN it
+// waits and refetches the lagging tickers (cache bypassed), and after
+// RADAR_COVERAGE_RETRIES it aborts LOUDLY — nothing is scanned, pushed or
+// published. A late Journal beats a wrong one.
+//
+// On a pass, tickers that are still lagging (≤ 10% at the default) are
+// EXCLUDED from the scan rather than scored on last week's bar; the Journal's
+// scorecard reports them as "not measured". An abort leaves last-run.json at
+// the previous week, so a daemon restart past Fri 18:00 MX re-fires the
+// pipeline (startup catch-up); the Friday 17:50 reload timer does NOT, so an
+// aborted Friday needs the operator's `--run-now --refetch` (the alert says so).
+
+// Env knobs. A blank, whitespace, malformed or out-of-range value falls back
+// to the default — a blank RADAR_COVERAGE_MIN would otherwise parse to 0 and
+// silently disable the guard. Worst case before an abort at the defaults:
+// 2 × (30 min wait + ~80 min full refetch) ≈ 3.7 h after the guard first fires.
+const envNum = (name: string, dflt: number, lo: number, hi: number): number => {
+  const raw = (process.env[name] ?? "").trim();
+  const n = Number(raw);
+  return raw !== "" && Number.isFinite(n) && n >= lo && n <= hi ? n : dflt;
+};
+const COVERAGE_MIN = envNum("RADAR_COVERAGE_MIN", 0.9, 0.5, 1);
+const COVERAGE_RETRIES = Math.floor(envNum("RADAR_COVERAGE_RETRIES", 2, 0, 5));
+const COVERAGE_RETRY_WAIT_MS = envNum("RADAR_COVERAGE_RETRY_WAIT_MS", 30 * 60 * 1000, 0, 6 * 3600_000);
+const POLYGON_PACE_MS = 13_000; // fetcher pacing — used only to log the projected refetch time
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function ensureBarCoverage(
+  tickers: string[],
+  weekLabel: string,
+): Promise<Set<string>> {
+  let spyRetried = false;
+  for (let attempt = 0; ; attempt++) {
+    const cov = barCoverage(getLastBarDates(tickers), weekLabel);
+    const pct = (cov.ratio * 100).toFixed(1);
+    console.log(
+      `[coverage] ${cov.covered.length}/${tickers.length} tickers carry a ${weekLabel} bar ` +
+        `(week of ${cov.expectedWeekMonday}) — ${pct}% (min ${COVERAGE_MIN * 100}%)`,
+    );
+    if (cov.ratio >= COVERAGE_MIN) {
+      // SPY is the Journal's market reference: one ticker never moves the
+      // ratio, so a lagging SPY gets its own single refetch (no wait).
+      if (cov.lagging.includes("SPY") && !spyRetried) {
+        spyRetried = true;
+        console.warn("[coverage] SPY has no bar for this week — refetching SPY once");
+        await fetchAll(["SPY"], undefined, { ttlDays: 0 });
+        continue;
+      }
+      if (cov.lagging.length > 0) {
+        console.warn(
+          `[coverage] excluded from this scan (no ${weekLabel} bar): ${cov.lagging.join(", ")}`,
+        );
+      }
+      return new Set(cov.lagging);
+    }
+
+    if (attempt >= COVERAGE_RETRIES) {
+      const text =
+        `⚠️ Williams Radar ${weekLabel}: solo ${cov.covered.length}/${tickers.length} tickers ` +
+        `tienen barra de la semana (${pct}%) tras ${COVERAGE_RETRIES} reintentos. ` +
+        `Pipeline ABORTADO — nada escaneado ni publicado. ` +
+        `Re-ejecutar con --refetch cuando Polygon publique las barras.`;
+      try {
+        await sendTelegram(escapeMd(text));
+      } catch (err) {
+        console.error("[coverage] Telegram alert failed:", err);
+      }
+      throw new Error(
+        `bar coverage ${pct}% < ${COVERAGE_MIN * 100}% for ${weekLabel} after ${COVERAGE_RETRIES} retries — aborting`,
+      );
+    }
+
+    const refetchMin = Math.round((cov.lagging.length * POLYGON_PACE_MS) / 60000);
+    console.warn(
+      `[coverage] below minimum — waiting ${Math.round(COVERAGE_RETRY_WAIT_MS / 60000)} min, ` +
+        `then refetching ${cov.lagging.length} lagging ticker(s) (~${refetchMin} min at Polygon pacing) ` +
+        `(attempt ${attempt + 1}/${COVERAGE_RETRIES})`,
+    );
+    await sleep(COVERAGE_RETRY_WAIT_MS);
+    await fetchAll(cov.lagging, undefined, { ttlDays: 0 });
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main pipeline
 // ---------------------------------------------------------------------------
 
@@ -337,10 +434,17 @@ async function runWeeklyPipelineInner(): Promise<void> {
   // 1. Ensure registry is populated
   seedRegistry();
 
-  // 2. Fetch stale / missing data
+  // 2. Fetch stale / missing data. SPY rides along: it is the Journal's
+  //    market reference (scanner-skipped) and had silently stopped refreshing
+  //    after the 2026-07-14 Polygon cutover ("SPY: —" from W30 to W37).
   console.log("\n[1/8] Fetching data...");
   const tickers = getUniverseTickers();
-  await fetchAll(tickers);
+  const fetchOpts = REFETCH ? { ttlDays: 0 } : {};
+  await fetchAll([...tickers, "SPY"], undefined, fetchOpts);
+
+  // 2b. Bar-coverage guard — refuse to scan last week's bars as this week's.
+  //     SPY is in the set and gets a dedicated refetch when it lags alone.
+  const lagging = await ensureBarCoverage([...tickers, "SPY"], weekLabel);
 
   // 3. Load bars directly from radar.db and run scan.
   //    loadBars() is the authoritative single source of truth — avoids the
@@ -349,6 +453,7 @@ async function runWeeklyPipelineInner(): Promise<void> {
   console.log("\n[2/8] Running scan...");
   const tickerBars = new Map<string, WeeklyBar[]>();
   for (const ticker of tickers) {
+    if (lagging.has(ticker)) continue; // no bar for this week — not scored on last week's
     const rows = loadBars(ticker);
     if (rows.length === 0) continue;
     const bars: WeeklyBar[] = rows.map((r) => ({
@@ -471,6 +576,7 @@ async function runWeeklyPipelineInner(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 const RUN_NOW = process.argv.includes("--run-now");
+const REFETCH = process.argv.includes("--refetch");
 
 /**
  * Startup catch-up: if the current week never completed a run and we're

@@ -70,6 +70,23 @@ function toFridayDate(msEpoch: number): string {
   return formatDate(d);
 }
 
+export function buildPolygonAggsUrl(
+  ticker: string,
+  from: Date,
+  to: Date,
+): string {
+  return (
+    `${getBaseUrl()}/aggs/ticker/${encodeURIComponent(ticker)}/range/1/week/` +
+    // sort=desc, NOT asc: the free tier caps an ascending response at 104
+    // rows while a 2-year window holds 105 weeks on ~40% of dates, and the
+    // row that falls off is the NEWEST bar (2026-W37: every ticker came back
+    // ending at the previous Friday; sort=desc returned all 105). Bars are
+    // re-sorted ascending by the caller, so consumers see no difference.
+    `${formatDate(from)}/${formatDate(to)}?adjusted=true&sort=desc&limit=500` +
+    `&apiKey=${encodeURIComponent(getApiKey())}`
+  );
+}
+
 export async function fetchWeeklyFromPolygon(
   ticker: string,
   lookbackYears = 2,
@@ -77,10 +94,7 @@ export async function fetchWeeklyFromPolygon(
   const now = new Date();
   const from = new Date(now);
   from.setUTCFullYear(from.getUTCFullYear() - lookbackYears);
-  const url =
-    `${getBaseUrl()}/aggs/ticker/${encodeURIComponent(ticker)}/range/1/week/` +
-    `${formatDate(from)}/${formatDate(now)}?adjusted=true&sort=asc&limit=500` +
-    `&apiKey=${encodeURIComponent(getApiKey())}`;
+  const url = buildPolygonAggsUrl(ticker, from, now);
 
   const res = await fetch(url);
   if (res.status === 429) {

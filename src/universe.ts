@@ -107,7 +107,7 @@ const TIER2_XLP: TickerMeta[] = [
   { ticker: "GIS",  sector: "XLP", tier: 2 },
   { ticker: "HRL",  sector: "XLP", tier: 2 },
   { ticker: "HSY",  sector: "XLP", tier: 2 },
-  { ticker: "K",    sector: "XLP", tier: 2 },
+  // K removed 2026-09-12: Polygon NOT_FOUND (delisted); last bar 2026-06-10.
   { ticker: "KHC",  sector: "XLP", tier: 2 },
   { ticker: "KMB",  sector: "XLP", tier: 2 },
   { ticker: "KO",   sector: "XLP", tier: 2 },
@@ -139,9 +139,9 @@ const TIER2_XLE: TickerMeta[] = [
   { ticker: "CVX",  sector: "XLE", tier: 2 },
   { ticker: "FANG", sector: "XLE", tier: 2 },
   { ticker: "HAL",  sector: "XLE", tier: 2 },
-  { ticker: "HES",  sector: "XLE", tier: 2 },
+  // HES removed 2026-09-12: series stopped 2025-07-18 (no Polygon bars since).
   { ticker: "MPC",  sector: "XLE", tier: 2 },
-  { ticker: "MRO",  sector: "XLE", tier: 2 },
+  // MRO removed 2026-09-12: series stopped 2024-11-22 (no Polygon bars since).
   { ticker: "OKE",  sector: "XLE", tier: 2 },
   { ticker: "OXY",  sector: "XLE", tier: 2 },
   { ticker: "PSX",  sector: "XLE", tier: 2 },
@@ -152,14 +152,14 @@ const TIER2_XLE: TickerMeta[] = [
   // W20 expansion — E&P and midstream
   { ticker: "EOG",  sector: "XLE", tier: 2 },
   { ticker: "DVN",  sector: "XLE", tier: 2 },
-  { ticker: "CTRA", sector: "XLE", tier: 2 },
+  // CTRA removed 2026-09-12: series stopped 2026-05-06 (no Polygon bars since).
   { ticker: "TRGP", sector: "XLE", tier: 2 },
   { ticker: "RRC",  sector: "XLE", tier: 2 },
   { ticker: "AR",   sector: "XLE", tier: 2 },
   { ticker: "SM",   sector: "XLE", tier: 2 },
   { ticker: "OVV",  sector: "XLE", tier: 2 },
   { ticker: "MUR",  sector: "XLE", tier: 2 },
-  { ticker: "CHK",  sector: "XLE", tier: 2 },
+  // CHK removed 2026-09-12: series stopped 2024-10-04 (no Polygon bars since).
   { ticker: "AM",   sector: "XLE", tier: 2 },
   { ticker: "PR",   sector: "XLE", tier: 2 },
   { ticker: "KMI",  sector: "XLE", tier: 2 },
@@ -231,7 +231,7 @@ const TIER2_XLV: TickerMeta[] = [
   { ticker: "WAT",  sector: "XLV", tier: 2 },
   { ticker: "COO",  sector: "XLV", tier: 2 },
   { ticker: "EW",   sector: "XLV", tier: 2 },
-  { ticker: "HOLX", sector: "XLV", tier: 2 },
+  // HOLX removed 2026-09-12: series stopped 2026-04-07 (no Polygon bars since).
   { ticker: "HSIC", sector: "XLV", tier: 2 },
   { ticker: "DVA",  sector: "XLV", tier: 2 },
 ];
@@ -262,7 +262,7 @@ const TIER2_XLB: TickerMeta[] = [
   { ticker: "DD",   sector: "XLB", tier: 2 },
   { ticker: "BALL", sector: "XLB", tier: 2 },
   { ticker: "AVY",  sector: "XLB", tier: 2 },
-  { ticker: "SEE",  sector: "XLB", tier: 2 },
+  // SEE removed 2026-09-12: series stopped 2026-04-09 (no Polygon bars since).
   { ticker: "SON",  sector: "XLB", tier: 2 },
   { ticker: "OLN",  sector: "XLB", tier: 2 },
   { ticker: "HUN",  sector: "XLB", tier: 2 },
@@ -347,10 +347,10 @@ const TIER2_XLC: TickerMeta[] = [
   { ticker: "CMCSA", sector: "XLC", tier: 2 },
   { ticker: "CHTR",  sector: "XLC", tier: 2 },
   { ticker: "TTWO",  sector: "XLC", tier: 2 },
-  { ticker: "SATS",  sector: "XLC", tier: 2 },
+  // SATS removed 2026-09-12: Polygon NOT_FOUND (delisted); last bar 2026-06-23.
   { ticker: "LYV",   sector: "XLC", tier: 2 },
   { ticker: "OMC",   sector: "XLC", tier: 2 },
-  { ticker: "EA",    sector: "XLC", tier: 2 },
+  // EA removed 2026-09-12: Polygon NOT_FOUND (delisted); last bar 2026-08-07.
   { ticker: "NFLX",  sector: "XLC", tier: 2 },
   { ticker: "WBD",   sector: "XLC", tier: 2 },
   { ticker: "VZ",    sector: "XLC", tier: 2 },
@@ -367,10 +367,10 @@ const TIER2_XLC: TickerMeta[] = [
   { ticker: "RBLX",  sector: "XLC", tier: 2 },
   { ticker: "DASH",  sector: "XLC", tier: 2 },
   { ticker: "MTCH",  sector: "XLC", tier: 2 },
-  { ticker: "PARA",  sector: "XLC", tier: 2 },
-  { ticker: "IPG",   sector: "XLC", tier: 2 },
+  // PARA removed 2026-09-12: ticker reassigned to Banzai International after Paramount became PSKY (2025-08); series has a 100x discontinuity.
+  // IPG removed 2026-09-12: series stopped 2025-11-26 (no Polygon bars since).
   { ticker: "ZG",    sector: "XLC", tier: 2 },
-  { ticker: "IAC",   sector: "XLC", tier: 2 },
+  // IAC removed 2026-09-12: Polygon NOT_FOUND (delisted); last bar 2026-06-05.
 ];
 
 const TIER2_XLRE: TickerMeta[] = [
@@ -388,9 +388,9 @@ const TIER2_XLRE: TickerMeta[] = [
   { ticker: "IRM",   sector: "XLRE", tier: 2 },
   { ticker: "VICI",  sector: "XLRE", tier: 2 },
   { ticker: "EXR",   sector: "XLRE", tier: 2 },
-  { ticker: "AVB",   sector: "XLRE", tier: 2 },
+  // AVB removed 2026-09-12: Polygon NOT_FOUND (delisted); last bar 2026-08-14.
   { ticker: "SBAC",  sector: "XLRE", tier: 2 },
-  { ticker: "EQR",   sector: "XLRE", tier: 2 },
+  // EQR removed 2026-09-12: Polygon NOT_FOUND (delisted); last bar 2026-08-21.
   { ticker: "WY",    sector: "XLRE", tier: 2 },
   { ticker: "ESS",   sector: "XLRE", tier: 2 },
   { ticker: "KIM",   sector: "XLRE", tier: 2 },
@@ -429,7 +429,7 @@ const TIER2_IBB: TickerMeta[] = [
   { ticker: "IONS",  sector: "IBB", tier: 2 },
   { ticker: "BBIO",  sector: "IBB", tier: 2 },
   // W20 expansion — genomics, rare disease, next-gen biotech
-  { ticker: "EXAS",  sector: "IBB", tier: 2 },
+  // EXAS removed 2026-09-12: series stopped 2026-03-24 (no Polygon bars since).
   { ticker: "RARE",  sector: "IBB", tier: 2 },
   { ticker: "HALO",  sector: "IBB", tier: 2 },
   { ticker: "IMVT",  sector: "IBB", tier: 2 },
@@ -442,7 +442,7 @@ const TIER2_IBB: TickerMeta[] = [
 ];
 
 const TIER2_XBI: TickerMeta[] = [
-  { ticker: "APLS",  sector: "XBI", tier: 2 },
+  // APLS removed 2026-09-12: series stopped 2026-05-14 (no Polygon bars since).
   { ticker: "TVTX",  sector: "XBI", tier: 2 },
   { ticker: "TGTX",  sector: "XBI", tier: 2 },
   { ticker: "ARWR",  sector: "XBI", tier: 2 },
@@ -457,19 +457,19 @@ const TIER2_XBI: TickerMeta[] = [
   { ticker: "CRSP",  sector: "XBI", tier: 2 },
   { ticker: "EXEL",  sector: "XBI", tier: 2 },
   { ticker: "SRRK",  sector: "XBI", tier: 2 },
-  { ticker: "NUVL",  sector: "XBI", tier: 2 },
+  // NUVL removed 2026-09-12: Polygon NOT_FOUND (delisted); last bar 2026-07-17.
   { ticker: "KYMR",  sector: "XBI", tier: 2 },
   { ticker: "PTGX",  sector: "XBI", tier: 2 },
   { ticker: "PCVX",  sector: "XBI", tier: 2 },
   // W20 expansion — small/mid-cap biotech
   { ticker: "RXRX",  sector: "XBI", tier: 2 },
   { ticker: "ACAD",  sector: "XBI", tier: 2 },
-  { ticker: "FOLD",  sector: "XBI", tier: 2 },
-  { ticker: "BPMC",  sector: "XBI", tier: 2 },
+  // FOLD removed 2026-09-12: series stopped 2026-04-27 (no Polygon bars since).
+  // BPMC removed 2026-09-12: series stopped 2025-07-18 (no Polygon bars since).
   { ticker: "RCUS",  sector: "XBI", tier: 2 },
   { ticker: "VKTX",  sector: "XBI", tier: 2 },
   { ticker: "ALLO",  sector: "XBI", tier: 2 },
-  { ticker: "SAGE",  sector: "XBI", tier: 2 },
+  // SAGE removed 2026-09-12: series stopped 2025-07-31 (no Polygon bars since).
   { ticker: "SRPT",  sector: "XBI", tier: 2 },
   { ticker: "AGIO",  sector: "XBI", tier: 2 },
   { ticker: "PTCT",  sector: "XBI", tier: 2 },

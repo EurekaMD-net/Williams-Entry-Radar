@@ -53,8 +53,8 @@ export function seedRegistry(): void {
  * Returns true if ticker has fresh data (< 6 days old).
  * Replaces: isCacheValid(ticker) from old cache.ts
  */
-export function isCacheValid(ticker: string): boolean {
-  return dbIsCacheValid(ticker, 6);
+export function isCacheValid(ticker: string, ttlDays = 6): boolean {
+  return dbIsCacheValid(ticker, ttlDays);
 }
 
 /**
