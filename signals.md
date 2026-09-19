@@ -919,3 +919,31 @@ XLP en corrección amplia — múltiples S1 simultáneos son señal de sector, n
 
 ---
 
+## 2026-W38
+
+**Run:** 2026-09-19T01:20:28.349Z
+**Escaneados:** 366 | **S2:** 0 | **S2D:** 1 | **S1:** 12
+
+### S2 DEGRADADA — POTENCIAL (movimiento adelantado)
+| Ticker | Sector | T | HR% | AO | AC | Price% | Señal |
+|--------|--------|---|-----|-----|-----|--------|-------|
+| TTD | XLC | 2 | —% | -7.005 | 0.674 | 1% | 2026-09-18 |
+
+### NIVEL 1 — OBSERVACIÓN (S1)
+| Ticker | Sector | T | HR% | Price% | Señal |
+|--------|--------|---|-----|--------|-------|
+| NRG | XLU | 2 | —% | 21% | 2026-09-18 |
+| UPS | XLI | 2 | —% | 30% | 2026-09-18 |
+| OLN | XLB | 2 | —% | 0% | 2026-09-18 |
+| HUN | XLB | 2 | —% | 6% | 2026-09-18 |
+| CC | XLB | 2 | —% | 24% | 2026-09-18 |
+| CNP | XLU | 2 | —% | 59% | 2026-09-18 |
+| LNT | XLU | 2 | —% | 42% | 2026-09-18 |
+| NI | XLU | 2 | —% | 44% | 2026-09-18 |
+| CAT | XLI | 2 | —% | 73% | 2026-09-18 |
+| LIN | XLB | 2 | —% | 41% | 2026-09-18 |
+| ON | XLK | 2 | —% | 41% | 2026-09-18 |
+| NNN | XLRE | 2 | —% | 31% | 2026-09-18 |
+
+---
+
