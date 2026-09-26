@@ -408,8 +408,7 @@ const TIER2_XLRE: TickerMeta[] = [
 ];
 
 const TIER2_IBB: TickerMeta[] = [
-  { ticker: "AMGN",  sector: "IBB", tier: 2 },
-  { ticker: "GILD",  sector: "IBB", tier: 2 },
+  // AMGN, GILD removed 2026-09-26: duplicates of the XLV entries (first match wins, so sector stays XLV).
   { ticker: "VRTX",  sector: "IBB", tier: 2 },
   { ticker: "REGN",  sector: "IBB", tier: 2 },
   { ticker: "ALNY",  sector: "IBB", tier: 2 },
@@ -451,7 +450,7 @@ const TIER2_XBI: TickerMeta[] = [
   { ticker: "ERAS",  sector: "XBI", tier: 2 },
   { ticker: "ALKS",  sector: "XBI", tier: 2 },
   { ticker: "MDGL",  sector: "XBI", tier: 2 },
-  { ticker: "APGE",  sector: "XBI", tier: 2 },
+  // APGE removed 2026-09-26: delisted 2026-09-04 (Polygon reference active=false; no bars since 2026-09-04).
   { ticker: "BEAM",  sector: "XBI", tier: 2 },
   { ticker: "PRAX",  sector: "XBI", tier: 2 },
   { ticker: "CRSP",  sector: "XBI", tier: 2 },

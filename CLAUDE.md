@@ -61,7 +61,7 @@ This is an autonomous build by Jarvis under operator supervision. The signal log
 
 ## Operations pins (2026-09-12, after the W37 re-issue)
 
-- **Universe = 367** (`getUniverseTickers()` dedupes; 20 dead tickers retired 2026-09-12, PARA now resolves to Banzai International on Polygon — never re-add it).
+- **Universe = 366** (`src/universe.test.ts` asserts no duplicate entries; 20 dead tickers retired 2026-09-12, PARA now resolves to Banzai International on Polygon — never re-add it; APGE retired 2026-09-26, delisted 2026-09-04).
 - **`src/fetch-polygon.ts` requests `sort=desc`.** The free tier truncates ascending responses at 104 rows and the row dropped is the NEWEST bar. Never revert to `asc`. Evidence: `results/probes/2026-09-12-polygon-sort-cap.md`.
 - **Bar-coverage guard** (`src/coverage.ts`, `ensureBarCoverage()` in `src/scheduler.ts`): the weekly run refuses to scan last week's bars — below `RADAR_COVERAGE_MIN` (0.9) it waits/refetches lagging tickers twice, then sends a Telegram alert and ABORTS before scan/push/publish. On a pass, lagging tickers are excluded from the scan. Look for the `[coverage]` line in `journalctl -u williams-radar` every Friday.
 - **Re-issue a week** (provider published late): Saturday, `set -a; . /etc/williams-radar.env; set +a; npx tsx src/scheduler.ts --run-now --refetch` from this directory, detached (`setsid nohup … &`). It re-pushes the CSV + `signals.md`, re-sends Telegram and REGENERATES the Journal page (analyst prose lost — republish via `very-light-cms/scripts/publish-journal.mjs`). `src/radar.ts` is a legacy CLI with no guard — do not use it for production weeks.

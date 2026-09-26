@@ -29,6 +29,8 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { getUniverseTickers } from "./universe.js";
+import { weekLabelMonday } from "./coverage.js";
+import { getWeekLabel } from "./time.js";
 import type { ScanResult } from "./scanner.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -60,9 +62,14 @@ export interface JournalData {
   year: number;
   prevWeekLabel: string;
   prevWeekNum: number;
+  nextWeekNum: number;
   runDate: string; // last trading day in DB (Friday-keyed Polygon bars since W29)
   prevBarDate: string; // prev-week last trading day
   totalScanned: number;
+  /** Unique tickers in UNIVERSE (SPY is the macro reference, not in UNIVERSE). */
+  universeSize: number;
+  /** Universe tickers with no scan result this week (e.g. excluded by the bar-coverage guard). */
+  notScanned: string[];
   scorecard: ScorecardEntry[];
   catAThisWeek: ScanResult[];
   s2Pure: ScanResult[];
@@ -70,6 +77,16 @@ export interface JournalData {
   s1: ScanResult[];
   preRadar: ScanResult[];
   spyDelta: number | null;
+}
+
+/**
+ * ISO week label `weeks` weeks away from `weekLabel`. Rolls over 53-week
+ * years: 2026-W53 → 2027-W01, and 2027-W01 → 2026-W53 going back.
+ */
+export function shiftWeekLabel(weekLabel: string, weeks: number): string {
+  const d = new Date(`${weekLabelMonday(weekLabel)}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 7 * weeks);
+  return getWeekLabel(d, "UTC");
 }
 
 // ---------------------------------------------------------------------------
@@ -171,6 +188,15 @@ function scorecardResult(
 
   if (current.signalLevel === "none") {
     if (current.ac > 0) {
+      // S2/S2D fire only on the zero-cross week (prev.ac < 0 in scanner.ts) and
+      // S1 needs ac < 0: a prior S2/S2D with AC still positive dropped because
+      // its confirmation week passed — AC did not flip this week.
+      if (prevSignal === "S2D" || prevSignal === "S2") {
+        return {
+          result: "✗",
+          notes: `${prevSignal} confirmation week passed. AC stays positive (+${current.ac.toFixed(2)}).`,
+        };
+      }
       return { result: "✗", notes: "Signal lost. AC flipped positive." };
     }
     if (current.ranging) {
@@ -222,9 +248,9 @@ export function buildJournalData(
     const [yr, wPart] = weekLabel.split("-W");
     const weekNum = parseInt(wPart, 10);
     const year = parseInt(yr, 10);
-    const prevWeekNum = weekNum > 1 ? weekNum - 1 : 52;
-    const prevYear = weekNum > 1 ? year : year - 1;
-    const prevWeekLabel = `${prevYear}-W${String(prevWeekNum).padStart(2, "0")}`;
+    const prevWeekLabel = shiftWeekLabel(weekLabel, -1);
+    const prevWeekNum = parseInt(prevWeekLabel.split("-W")[1], 10);
+    const nextWeekNum = parseInt(shiftWeekLabel(weekLabel, 1).split("-W")[1], 10);
 
     // Source of truth for dates: the DB itself.
     // Use the global MAX(date) across all tickers — SPY is sometimes stale
@@ -340,9 +366,16 @@ export function buildJournalData(
       (a, b) => a.pricePercentile - b.pricePercentile,
     );
 
-    const preRadar = results.filter(
-      (r) => r.signalLevel === "none" && r.pricePercentile <= 15,
-    );
+    const preRadar = results
+      .filter((r) => r.signalLevel === "none" && r.pricePercentile <= 15)
+      .sort(
+        (a, b) =>
+          a.pricePercentile - b.pricePercentile ||
+          a.ticker.localeCompare(b.ticker),
+      );
+
+    const scanned = new Set(results.map((r) => r.ticker));
+    const notScanned = [...universe].filter((t) => !scanned.has(t)).sort();
 
     db.close();
 
@@ -352,9 +385,12 @@ export function buildJournalData(
       year,
       prevWeekLabel,
       prevWeekNum,
+      nextWeekNum,
       runDate,
       prevBarDate,
       totalScanned,
+      universeSize: universe.size,
+      notScanned,
       scorecard,
       catAThisWeek,
       s2Pure,
@@ -453,7 +489,7 @@ function renderScorecard(data: JournalData): string {
 }
 
 function renderSignalExitAnalysis(data: JournalData): string {
-  const { prevWeekNum, weekNum, scorecard } = data;
+  const { prevWeekNum, nextWeekNum, scorecard } = data;
 
   const exits = scorecard.filter(
     (e): e is ScorecardEntry & { deltaPct: number } =>
@@ -469,6 +505,10 @@ function renderSignalExitAnalysis(data: JournalData): string {
   );
   lines.push("");
 
+  // Verdict rule: only an explicit AC-red or ranging note overrides price.
+  // Every other exit — including a prior S2/S2D whose confirmation week passed
+  // with AC still positive — is judged on Δ% alone: ≤ −5 breakdown, < 0 false
+  // technical signal, < 4 range, ≥ 4 real appreciation.
   type ExitVerdict = "real" | "range" | "false_technical" | "collapse";
   function classify(e: ScorecardEntry & { deltaPct: number }): {
     verdict: ExitVerdict;
@@ -501,7 +541,15 @@ function renderSignalExitAnalysis(data: JournalData): string {
       ? "AC turned negative"
       : e.notes.includes("Ranging filter")
         ? "Ranging filter"
-        : "AC crossed positive";
+        : e.notes.includes("confirmation week passed")
+          ? "AC stayed positive after the zero-cross"
+          : e.notes.includes("Price out of range")
+            ? "Price left the entry range"
+            : e.notes.includes("Conditions no longer met")
+              ? "Conditions no longer met"
+              : e.notes.includes("not in scan universe")
+                ? "Not in this week's scan"
+                : "AC crossed positive";
     lines.push(`| **${e.ticker}** | ${fmtPct(e.deltaPct)} | ${reason} | ${label} |`);
   }
 
@@ -519,8 +567,11 @@ function renderSignalExitAnalysis(data: JournalData): string {
 
   const worst = sorted[sorted.length - 1];
   if (worst && worst.deltaPct < -4) {
+    const cause = worst.notes.includes("confirmation week passed")
+      ? `left the list because its ${worst.signal} confirmation week passed, and price kept falling after the zero-cross`
+      : "did not lose its signal because the setup resolved — it lost it because the deterioration deepened";
     lines.push(
-      `Notable: **${worst.ticker}** (${fmtPct(worst.deltaPct)}) did not lose its signal because the setup resolved — it lost it because the deterioration deepened. Worth monitoring in W${weekNum} as a continuation of negative momentum.`,
+      `Notable: **${worst.ticker}** (${fmtPct(worst.deltaPct)}) ${cause}. Worth monitoring in W${nextWeekNum} as a continuation of negative momentum.`,
     );
     lines.push("");
   }
@@ -529,7 +580,7 @@ function renderSignalExitAnalysis(data: JournalData): string {
 }
 
 function renderCatA(data: JournalData): string {
-  const { weekNum, catAThisWeek } = data;
+  const { weekNum, nextWeekNum, catAThisWeek } = data;
   const lines: string[] = [];
 
   lines.push(`## W${weekNum} Candidates — Category A`);
@@ -537,8 +588,8 @@ function renderCatA(data: JournalData): string {
   lines.push("> 🔴 MODEL OUTPUT — Algorithm-generated. Not editorial picks.");
   lines.push("");
   lines.push(
-    `The ${catAThisWeek.length} tickers the model flagged as priority for W${weekNum + 1} monitoring. ` +
-      `Ordered by price percentile (lower = more depressed relative to 52-week range).`,
+    `The ${catAThisWeek.length} tickers the model flagged as priority for W${nextWeekNum} monitoring. ` +
+      `Ordered by price percentile (lower = more depressed relative to the 104-week (2-year) range).`,
   );
   lines.push("");
 
@@ -558,7 +609,7 @@ function renderCatA(data: JournalData): string {
   }
 
   lines.push("");
-  lines.push(`Decision week: W${weekNum + 1}.`);
+  lines.push(`Decision week: W${nextWeekNum}.`);
 
   return lines.join("\n");
 }
@@ -611,7 +662,7 @@ function renderSignals(data: JournalData): string {
 }
 
 function renderPreRadar(data: JournalData): string {
-  const { preRadar, weekNum } = data;
+  const { preRadar, nextWeekNum } = data;
   const lines: string[] = [];
 
   lines.push("## Pre-Radar — Approaching the Signal");
@@ -620,7 +671,7 @@ function renderPreRadar(data: JournalData): string {
   lines.push("");
   lines.push(
     `${preRadar.length} tickers at structural lows (≤p15) with no active signal yet. ` +
-      `Names to watch heading into W${weekNum + 1}.`,
+      `Names to watch heading into W${nextWeekNum}.`,
   );
   lines.push("");
 
@@ -638,7 +689,8 @@ function renderPreRadar(data: JournalData): string {
 }
 
 function renderUniverse(data: JournalData): string {
-  const { totalScanned, s1, s2Pure, s2Degraded } = data;
+  const { totalScanned, universeSize, notScanned, s1, s2Pure, s2Degraded } =
+    data;
   const nearLowsCount = [...s2Pure, ...s2Degraded, ...s1].filter(
     (r) => r.nearLows,
   ).length;
@@ -646,7 +698,10 @@ function renderUniverse(data: JournalData): string {
   return [
     "## The Universe",
     "",
-    `**${totalScanned} tickers · 13 sectors**`,
+    `**${universeSize} tickers in universe · ${totalScanned} scanned · 13 sectors**`,
+    ...(notScanned.length > 0
+      ? [`Not scanned this week: ${notScanned.join(", ")}`]
+      : []),
     "Sectors covered: XLU, XLI, XLP, XLE, XLF, XLV, XLB, XLY, XLK, XLC, XLRE, IBB, XBI",
     "Market reference: SPY",
     "",

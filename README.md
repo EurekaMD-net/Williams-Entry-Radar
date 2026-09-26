@@ -146,7 +146,7 @@ SQLite-backed scanner that runs weekly, fetches current data, detects active S1/
 ```
 delivery preflight (Telegram getMe/getChat + GitHub /user — warn on broken)
   ↓
-Universe (367 tickers across 13 sectors, 2 tiers; ~254 active per week post-ranging filter)
+Universe (366 tickers across 13 sectors, 2 tiers; ~254 active per week post-ranging filter)
   ↓
 fetch (cache → Polygon at 13 s/req ≈ 80 min cold for the full universe → Alpha Vantage free-tier fallback)
   ↓
@@ -220,7 +220,7 @@ cp .env.example .env
 # Install
 npm install
 
-# Run full radar (all 367 tickers across 13 sectors) — legacy CLI: no bar-coverage guard, prefer the scheduler
+# Run full radar (all 366 tickers across 13 sectors) — legacy CLI: no bar-coverage guard, prefer the scheduler
 # Weekly pipeline one-shot (bar-coverage guard, --refetch bypasses the 6-day cache; use it to re-issue a week
 # after the provider published late — 2026-W37): npx tsx src/scheduler.ts --run-now --refetch
 AV_API_KEY=your_key tsx src/radar.ts
